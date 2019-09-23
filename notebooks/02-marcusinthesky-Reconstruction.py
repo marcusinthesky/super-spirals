@@ -35,8 +35,8 @@ sys.path.append("../")
 hv.extension("bokeh")
 
 # %%
-from lib.metrics import reconstruction_benchmark
-from lib.neural_network import VAE
+from super_spirals.metrics import reconstruction_benchmark
+from super_spirals.neural_network import VAE
 
 
 # %%

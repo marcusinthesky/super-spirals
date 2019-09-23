@@ -31,7 +31,7 @@ sys.path.append("../")
 hv.extension("bokeh")
 
 # %%
-from lib.neural_network import VAE
+from super_spirals.neural_network import VAE
 
 # %% [markdown]
 # # Preliminary Analysis
