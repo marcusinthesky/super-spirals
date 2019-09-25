@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -29,19 +29,20 @@ from super_spirals.neural_network import VAE
 
 # %%
 X = np.random.multivariate_normal(
-    mean=np.zeros(2), cov=np.diag(np.ones(2)), size=100000
+    mean=np.zeros(2), cov=np.diag(np.ones(2)), size=1000000
 )
 
 beta = np.random.uniform(-0.1, 0.1, size=(2, 2))
 data = pd.DataFrame(X @ beta).where(lambda d: d > 0).dropna(how="any").to_numpy()
 
 # %%
-vae = VAE(hidden_layer_sizes=(2, 1), activation="relu")
+vae = VAE(hidden_layer_sizes=(15, 5, 1), activation="relu")
 
 # %%
 vae.fit(x=data)
 
 # %%
+# %%output filename='../media/04-generative-samples' fig='png'
 (
     (
         pd.DataFrame(data, columns=["x", "y"])

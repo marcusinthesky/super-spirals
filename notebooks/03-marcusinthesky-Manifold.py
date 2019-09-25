@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -84,6 +84,7 @@ s_curve_components = pd.concat(
 )
 
 # %%
+# %%output filename='../media/03-scurve-latent' fig='png'
 (
     s_curve_components.hvplot.scatter(
         x="Component 1", y="Component 2", color="y", groupby="tag", cmap="spectral"
@@ -107,6 +108,7 @@ swissroll_components = pd.concat(
 )
 
 # %%
+# %%output filename='../media/03-swissroll-latent' fig='png'
 (
     swissroll_components.hvplot.scatter(
         x="Component 1", y="Component 2", color="y", groupby="tag", cmap="spectral"

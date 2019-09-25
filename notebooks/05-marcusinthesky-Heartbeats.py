@@ -108,8 +108,7 @@ frequencies_b = pipe(files, pd.Series).apply(get_waveform)
 set_a_filtered = set_a.loc[~frequencies_a.isna().all(axis=1),:]
 
 # %%
-pipeline = make_pipeline(StandardScaler(),
-                         PCA(whiten=True),
+pipeline = make_pipeline(StandardScaler(),#PCA(whiten=True),
                          VAE(hidden_layer_sizes=(5, 3, 2), 
                              max_iter = 500,
                              activation='tanh'))
