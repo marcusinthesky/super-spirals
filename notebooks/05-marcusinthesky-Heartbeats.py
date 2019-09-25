@@ -80,14 +80,13 @@ from scipy.integrate import simps
 
 
 # %%
-def get_waveform(f, components=20):
+def get_waveform(f, components=10):
     try:
         return (pipe(f,
                      wavfile.read, 
                      get(1),
                      lambda x: x[:20000],
-                     lambda x: (x)/(np.quantile(x, 0.9)),
-                     lambda x: (x - np.mean(x)),
+                     lambda x: (x)/(np.quantile(np.abs(x), 0.9)),
                      partial(fft, n=components),
                      np.real,
                      pd.Series))
@@ -110,7 +109,7 @@ set_a_filtered = set_a.loc[~frequencies_a.isna().all(axis=1),:]
 
 # %%
 pipeline = make_pipeline(StandardScaler(),
-                         PCA(n_components=10, whiten=True),
+                         PCA(whiten=True),
                          VAE(hidden_layer_sizes=(5, 3, 2), 
                              max_iter = 500,
                              activation='tanh'))
@@ -147,11 +146,11 @@ class Dashboard(param.Parameterized):
                     wavfile.read, 
                     get(1))
 
-        time = pipe(data, lambda x: x[::400], hv.Curve).opts(
+        time = pipe(data, lambda x: x[::400]/np.max(np.abs(x)), hv.Curve).opts(
             width=400, xlabel="time", ylabel="waveform", height=300
         )
 
-        frequency = pipe(data, partial(fft, n=1000), np.real, hv.Curve).opts(
+        frequency = pipe(data, partial(fft, n=1000), np.real, lambda x: x/np.max(np.abs(x)),hv.Curve).opts(
             xlabel="frequency", ylabel="aplitude", width=400, height=300
         )
 

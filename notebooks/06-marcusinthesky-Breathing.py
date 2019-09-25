@@ -13,7 +13,7 @@
 # ---
 
 # %%
-# ! kaggle datasets download -d vbookshelf/respiratory-sound-database -p ../data/raw
+# # ! kaggle datasets download -d vbookshelf/respiratory-sound-database -p ../data/raw
 
 # %%
 import os
@@ -81,12 +81,13 @@ patient_diagnosis = pipe(database_path,
 
 
 # %%
-def get_waveform(f, components=1000):
+def get_waveform(f, components=20):
     try:
         return (pipe(f,
                      read_wav, 
                      get(1),
-                     lambda x: (x)/(np.quantile(x, 0.9)),
+                     lambda x: x[:7500],
+                     lambda x: (x)/(np.quantile(np.abs(x), 0.9)),
                      partial(fft, n=components),
                      np.real,
                      pd.Series))
@@ -100,30 +101,36 @@ audio_frequencies = (pd.Series(audio_files)
                      .apply(get_waveform))
 
 # %%
+audio_frequencies.dropna().shape
+
+# %%
 pipeline = make_pipeline(StandardScaler(),
-                         PCA(n_components=20, whiten=True),
-                         VAE(hidden_layer_sizes=(5, 3, 2), 
+                         PCA(whiten=True),
+                         VAE(hidden_layer_sizes=(10, 7, 5, 2), 
                              max_iter = 500,
                              activation='tanh'))
 
 # %%
-pipeline.fit(audio_frequencies)
+pipeline.fit(audio_frequencies.dropna())
 
 # %%
 pipeline.named_steps['vae'].encoder.summary()
 
 # %%
-latent = pipeline.transform(audio_frequencies)
+latent = pipeline.transform(audio_frequencies.dropna())
 
 # %%
-latent.shape
-
-# %%
-patient_diagnosis.rename(columns = )
+not_null_index = (audio_frequencies
+                  .isna()
+                  .all(1)
+                  .where(lambda x: ~x)
+                  .dropna()
+                  .index
+                  .to_list())
 
 # %%
 latent_df = (pd.DataFrame(latent, columns = ['Component 1', 'Component 2'])
-             .assign(file = audio_files)
+             .assign(file = pd.Series(audio_files).loc[not_null_index].dropna().reset_index(drop=True))
              .assign(patient = lambda d: d.file
                      .str.split('/')
                      .apply(get(-1))
@@ -133,9 +140,6 @@ latent_df = (pd.DataFrame(latent, columns = ['Component 1', 'Component 2'])
              .merge(patient_diagnosis,
                     how='left', 
                     on='patient'))
-
-# %%
-latent_df.columns
 
 # %%
 clips = latent_df.file.to_list()
@@ -155,11 +159,18 @@ class Dashboard(param.Parameterized):
                     read_wav, 
                     get(1))
 
-        time = pipe(data, lambda x: x[::10], hv.Curve).opts(
+        time = pipe(data, 
+                    lambda x: x[::10], 
+                    lambda x: x/np.max(np.abs(x)),
+                    hv.Curve).opts(
             width=400, xlabel="time", ylabel="waveform", height=300
         )
 
-        frequency = pipe(data, partial(fft, n=100), np.real, hv.Curve).opts(
+        frequency = pipe(data, 
+                         partial(fft, n=100), 
+                         np.real, 
+                         lambda x: x/np.max(np.abs(x)),
+                         hv.Curve).opts(
             xlabel="frequency", ylabel="aplitude", width=400, height=300
         )
 

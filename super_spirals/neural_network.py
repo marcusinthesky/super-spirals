@@ -7,6 +7,7 @@ from keras.datasets import mnist
 from keras.losses import mse, binary_crossentropy
 from keras.utils import plot_model
 from keras import backend as K
+from keras.regularizers import l2
 
 
 def sampling(args):
@@ -56,6 +57,9 @@ class VAE(BaseEstimator, TransformerMixin):
                  n_iter_no_change=10):
         """
         """
+        self.alpha = alpha
+        self.regularizer = l2(alpha)
+        
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
@@ -76,7 +80,9 @@ class VAE(BaseEstimator, TransformerMixin):
         
         inputs = Input(shape=(input_shape,), name='encoder_input')
         transformations = pipe(encoder_shape, 
-                               map(lambda d: Dense(units=d, activation=self.activation)), 
+                               map(lambda d: Dense(units=d, 
+                                                   kernel_regularizer=self.regularizer,
+                                                   activation=self.activation)), 
                                lambda f: compose_left(*f))
         
         x = pipe(inputs, transformations)
@@ -101,7 +107,9 @@ class VAE(BaseEstimator, TransformerMixin):
         latent_inputs = Input(shape=(latent_shape,), name='z_sampling')
         
         transformations = pipe(decoder_layers, 
-                               map(lambda d: Dense(units=d, activation=self.activation)), 
+                               map(lambda d: Dense(units=d, 
+                                                   kernel_regularizer=self.regularizer,
+                                                   activation=self.activation)), 
                                lambda f: compose_left(*f))
         final_layer = Dense(original_dim, name='original_dim')
         
