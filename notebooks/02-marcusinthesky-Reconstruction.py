@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.2.1
+#       jupytext_version: 1.2.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -70,12 +70,15 @@ iris_df, iris_reconstruction, iris_silhouette, iris_plot = reconstruction_benchm
 )
 
 # %%
+# %%output filename='../media/02-iris-loss' fig='png'
 iris_reconstruction
 
 # %%
+# %%output filename='../media/02-iris-silhouette' fig='png'
 iris_silhouette
 
 # %%
+# %%output filename='../media/02-iris-latent' fig='png'
 iris_plot
 
 # %%
@@ -85,12 +88,15 @@ wine_df, wine_reconstruction, wine_silhouette, wine_plot = reconstruction_benchm
 )
 
 # %%
+# %%output filename='../media/02-wine-loss' fig='png'
 wine_reconstruction
 
 # %%
+# %%output filename='../media/02-wine-silhouette' fig='png'
 wine_silhouette
 
 # %%
+# %%output filename='../media/02-wine-latent' fig='png'
 wine_plot
 
 # %%
@@ -100,12 +106,15 @@ cancer_df, cancer_reconstruction, cancer_silhouette, cancer_plot = reconstructio
 )
 
 # %%
+# %%output filename='../media/02-cancer-loss' fig='png'
 cancer_reconstruction
 
 # %%
+# %%output filename='../media/02-cancer-silhouette' fig='png'
 cancer_silhouette
 
 # %%
+# %%output filename='../media/02-cancer-latent' fig='png'
 cancer_plot
 
 
@@ -123,12 +132,15 @@ random_df, random_reconstruction, random_silhouette, random_plot = reconstructio
 )
 
 # %%
+# %%output filename='../media/02-random-loss' fig='png'
 random_reconstruction
 
 # %%
+# %%output filename='../media/02-random-silhouette' fig='png'
 random_silhouette
 
 # %%
+# %%output filename='../media/02-random-latent' fig='png'
 random_plot
 
 # %%
