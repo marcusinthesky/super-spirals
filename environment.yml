@@ -1,5 +1,6 @@
 name: super-spirals
 channels:
+  - bioconda
   - conda-forge
   - intel
   - defaults
@@ -27,6 +28,7 @@ dependencies:
   - daal4py=2019.5=py36ha68da19_2
   - decorator=4.3.0=py36_3
   - entrypoints=0.2.3=py36_2
+  - fastdtw=0.2.0=py_1
   - freetype=2.9.1=h8a8886c_1
   - gast=0.2.2=py36_0
   - get_terminal_size=1.0.0=py36_7
@@ -57,6 +59,7 @@ dependencies:
   - jupyterlab=1.1.4=py_0
   - jupyterlab_server=1.0.0=py_0
   - jupytext=1.2.4=0
+  - kaggle=1.5.6=py36_0
   - keras=2.2.4=0
   - keras-applications=1.0.8=py_0
   - keras-base=2.2.4=py36_0
@@ -109,6 +112,7 @@ dependencies:
   - pysocks=1.6.7=py36_1
   - python=3.6.8=h0371630_0
   - python-dateutil=2.8.0=py36_0
+  - python-slugify=3.0.3=py_0
   - pytz=2019.1=py36_0
   - pyviz_comms=0.7.2=py_0
   - pyyaml=5.1.1=py36_0
@@ -132,11 +136,14 @@ dependencies:
   - termcolor=1.1.0=py36_1
   - terminado=0.8.1=py36_2
   - testpath=0.3.1=py36_2
+  - text-unidecode=1.2=py_0
   - tk=8.6.8=hbc83047_0
   - toml=0.10.0=py_0
   - toolz=0.10.0=py_0
   - tornado=4.5.2=py36_5
+  - tqdm=4.36.1=py_0
   - traitlets=4.3.2=py36_3
+  - unidecode=1.1.1=py_0
   - urllib3=1.24.1=py36_2
   - wcwidth=0.1.7=py36_6
   - webencodings=0.5.1=py36_0

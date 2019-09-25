@@ -13,7 +13,7 @@
 # ---
 
 # %%
-# # ! kaggle datasets download -d kinguistics/heartbeat-sounds -p ../data/raw
+# ! kaggle datasets download -d vbookshelf/respiratory-sound-database -p ../data/raw
 
 # %%
 import os
@@ -32,7 +32,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split, KFold
 from scipy.io import wavfile  # get the api
 from scipy.fftpack import fft
-from scipy.spatial import procrustes
 from scipy.stats import iqr
 import panel as pn
 import param
@@ -44,50 +43,50 @@ hv.extension("bokeh")
 
 # %%
 from super_spirals.neural_network import VAE
+from super_spirals.io import read_wav
 
 # %%
-data_path = os.path.join("..", "data", "raw", "heatbeat-sounds")
+data_path = os.path.join("..", "data", "raw", "respiratory-sound-database")
 
 if not os.path.exists(data_path):
     with zipfile.ZipFile(
-        os.path.join("..", "data", "raw", "heartbeat-sounds.zip"), "r"
+        os.path.join("..", "data", "raw", "respiratory-sound-database.zip"), "r"
     ) as zip_ref:
         zip_ref.extractall(data_path)
 
 # %%
-heartbeat_path = os.path.join(data_path, "set_b")
+database_path = os.path.join(data_path, 'Respiratory_Sound_Database')
+if not os.path.exists(database_path):
+    with zipfile.ZipFile(
+        os.path.join(data_path, 'Respiratory_Sound_Database.zip'), "r"
+    ) as zip_ref:
+        zip_ref.extractall(data_path)
 
 # %%
-files = pipe(
-    os.listdir(heartbeat_path),
-    map(str),
-    map(lambda f: os.path.join(heartbeat_path, f)),
-    list,
-)
+audio_path = os.path.join(database_path, "audio_and_txt_files")
 
 # %%
-set_a = pipe(data_path,
-             lambda f: os.path.join(f, 'set_a.csv'),
-             pd.read_csv)
+audio_files = pipe(
+                    os.listdir(audio_path),
+                    map(str),
+                    map(lambda f: os.path.join(audio_path, f)),
+                    filter(lambda s: s.endswith('wav')),
+                    list,
+                )
 
 # %%
-set_b = pipe(data_path,
-             lambda f: os.path.join(f, 'set_b.csv'),
-             pd.read_csv)
-
-# %%
-from scipy.integrate import simps
+patient_diagnosis = pipe(database_path,
+                         lambda f: os.path.join(f, 'patient_diagnosis.csv'),
+                         partial(pd.read_csv, names=['patient','diagnosis']))
 
 
 # %%
-def get_waveform(f, components=20):
+def get_waveform(f, components=1000):
     try:
         return (pipe(f,
-                     wavfile.read, 
+                     read_wav, 
                      get(1),
-                     lambda x: x[:20000],
                      lambda x: (x)/(np.quantile(x, 0.9)),
-                     lambda x: (x - np.mean(x)),
                      partial(fft, n=components),
                      np.real,
                      pd.Series))
@@ -97,39 +96,49 @@ def get_waveform(f, components=20):
 
 
 # %%
-frequencies_a = (set_a
-                 .fname
-                 .apply(lambda f: os.path.join(data_path, f))
-                 .apply(get_waveform))
-
-# %%
-frequencies_b = pipe(files, pd.Series).apply(get_waveform)
-
-# %%
-set_a_filtered = set_a.loc[~frequencies_a.isna().all(axis=1),:]
+audio_frequencies = (pd.Series(audio_files)
+                     .apply(get_waveform))
 
 # %%
 pipeline = make_pipeline(StandardScaler(),
-                         PCA(n_components=10, whiten=True),
+                         PCA(n_components=20, whiten=True),
                          VAE(hidden_layer_sizes=(5, 3, 2), 
                              max_iter = 500,
                              activation='tanh'))
 
 # %%
-pipeline.fit(frequencies_b.dropna())
+pipeline.fit(audio_frequencies)
 
 # %%
 pipeline.named_steps['vae'].encoder.summary()
 
 # %%
-latent_a = pipeline.transform(frequencies_a.loc[~frequencies_a.isna().all(axis=1),:])
+latent = pipeline.transform(audio_frequencies)
 
 # %%
-latent_a_df = (pd.DataFrame(latent_a, columns = ['Component 1', 'Component 2']).add(np.random.uniform(0,0.1, size=(124,2)))
-               .assign(label = set_a_filtered.label.fillna('None')))
+latent.shape
 
 # %%
-clips = set_a.loc[~frequencies_a.isna().all(axis=1),'fname'].to_list()
+patient_diagnosis.rename(columns = )
+
+# %%
+latent_df = (pd.DataFrame(latent, columns = ['Component 1', 'Component 2'])
+             .assign(file = audio_files)
+             .assign(patient = lambda d: d.file
+                     .str.split('/')
+                     .apply(get(-1))
+                     .str.split('_')
+                     .apply(get(0))
+                     .astype(np.int))
+             .merge(patient_diagnosis,
+                    how='left', 
+                    on='patient'))
+
+# %%
+latent_df.columns
+
+# %%
+clips = latent_df.file.to_list()
 
 
 # %%
@@ -140,18 +149,17 @@ class Dashboard(param.Parameterized):
     def update(self, index):
         if index:
             self.files.value = clips[index[0]]
-        wav_file = pipe(self.files.value,
-                        lambda f: os.path.join(data_path, f))
+        wav_file = pipe(self.files.value)
 
         data = pipe(wav_file, 
-                    wavfile.read, 
+                    read_wav, 
                     get(1))
 
-        time = pipe(data, lambda x: x[::400], hv.Curve).opts(
+        time = pipe(data, lambda x: x[::10], hv.Curve).opts(
             width=400, xlabel="time", ylabel="waveform", height=300
         )
 
-        frequency = pipe(data, partial(fft, n=1000), np.real, hv.Curve).opts(
+        frequency = pipe(data, partial(fft, n=100), np.real, hv.Curve).opts(
             xlabel="frequency", ylabel="aplitude", width=400, height=300
         )
 
@@ -160,9 +168,9 @@ class Dashboard(param.Parameterized):
     @pn.depends("files.value")
     def view(self):
         
-        latent = latent_a_df.hvplot.scatter(x='Component 1', 
+        latent = latent_df.hvplot.scatter(x='Component 1', 
                                            y='Component 2',
-                                           color='label',
+                                           color='diagnosis',
                                            title='Latent Space of Heartbeat FFT',
                                            width=800,
                                            height=300,
@@ -172,9 +180,7 @@ class Dashboard(param.Parameterized):
         
         reg = hv.DynamicMap(self.update, kdims=[], streams=[stream])
         
-        audio = pn.widgets.Audio(name="Audio", value=pipe(self.files.value,
-                                                          lambda f: os.path.join(data_path, f)))
-
+        audio = pn.widgets.Audio(name="Audio", value=pipe(self.files.value))
         
         
         return pn.Column(latent, reg, audio)
