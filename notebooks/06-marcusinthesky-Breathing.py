@@ -79,6 +79,14 @@ patient_diagnosis = pipe(database_path,
                          lambda f: os.path.join(f, 'patient_diagnosis.csv'),
                          partial(pd.read_csv, names=['patient','diagnosis']))
 
+# %%
+filter_signal = lambda a: (pipe(a, 
+                                 partial(find_peaks,distance=1000),
+                                 get(0), 
+                                 lambda x: pipe(a[x], np.median),
+                                 lambda x: np.where(abs(a) > x, np.sign(a) * x, a),
+                                ))
+
 
 # %%
 def get_waveform(f, components=20):
@@ -86,7 +94,7 @@ def get_waveform(f, components=20):
         return (pipe(f,
                      read_wav, 
                      get(1),
-                     lambda x: x[:7500],
+                     lambda x: x[::250],
                      lambda x: (x)/(np.quantile(np.abs(x), 0.9)),
                      partial(fft, n=components),
                      np.real,
@@ -99,9 +107,6 @@ def get_waveform(f, components=20):
 # %%
 audio_frequencies = (pd.Series(audio_files)
                      .apply(get_waveform))
-
-# %%
-audio_frequencies.dropna().shape
 
 # %%
 pipeline = make_pipeline(StandardScaler(),
@@ -139,7 +144,9 @@ latent_df = (pd.DataFrame(latent, columns = ['Component 1', 'Component 2'])
                      .astype(np.int))
              .merge(patient_diagnosis,
                     how='left', 
-                    on='patient'))
+                    on='patient')
+             .groupby('diagnosis').apply(lambda d: d.sample(n=100, replace=True))
+             .reset_index(drop=True))
 
 # %%
 clips = latent_df.file.to_list()

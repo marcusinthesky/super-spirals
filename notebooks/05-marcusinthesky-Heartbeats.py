@@ -31,7 +31,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split, KFold
 from scipy.io import wavfile  # get the api
-from scipy.fftpack import fft
+from scipy.fftpack import fft, irfft
+from scipy.signal import find_peaks, resample_poly
 from scipy.spatial import procrustes
 from scipy.stats import iqr
 import panel as pn
@@ -76,58 +77,161 @@ set_b = pipe(data_path,
              pd.read_csv)
 
 # %%
-from scipy.integrate import simps
+filter_signal = lambda a: (pipe(a, 
+                                 partial(find_peaks,distance=1000),
+                                 get(0), 
+                                 lambda x: pipe(a[x], np.median),
+                                 lambda x: np.clip(a, -x, x),
+                                ))
+
+# %%
+get_signal = lambda f: pipe(f,
+                             wavfile.read, 
+                             get(1))
+
+# %%
+a = pipe(files[0], get_signal)
+
+b = pipe(files[0], get_signal, filter_signal)
+
+c = pipe(b, 
+         partial(find_peaks,distance=1000), 
+         get(0), 
+         lambda x: np.vstack((np.arange(b.shape[0]), b)).T[x,:])
+
+(hv.Curve(a) * 
+ hv.Curve(b).opts(color='orange') * 
+ hv.Scatter(c).opts(color='green')).opts(width=600)
 
 
 # %%
-def get_waveform(f, components=10):
+def get_waveform(f, components=40):
     try:
         return (pipe(f,
                      wavfile.read, 
                      get(1),
                      lambda x: x[:20000],
+                     filter_signal,
                      lambda x: (x)/(np.quantile(np.abs(x), 0.9)),
                      partial(fft, n=components),
                      np.real,
+                     filter_signal,
                      pd.Series))
                         
     except:
-        return pd.Series(np.zeros(components) * np.nan)
+        return pd.Series(np.zeros(int(round(components))) * np.nan)
 
+
+# %%
+def explode(b, components=10):
+    return pipe(b,
+                partial(find_peaks,distance=1000), 
+                get(0),
+                sliding_window(2),
+                map(lambda x: b[x[0]:x[1]]),
+                map(lambda x: (x)/(np.quantile(np.abs(x), 0.9))),
+                map(lambda x: x[np.round(np.linspace(0, x.shape[0]-1, num=1000)).astype(np.int)]),
+                map(partial(fft, n=components)),
+                map(np.real),
+                list)
+
+# %%
+# fn = lambda b: pipe(b,
+#                     partial(find_peaks,distance=1000), 
+#                     get(0),
+#                     sliding_window(2),
+#                     map(lambda x: b[x[0]:x[1]]),
+#                     map(lambda x: (x)/(np.quantile(np.abs(x), 0.9))),
+#                     map(lambda x: x[np.round(np.linspace(0, x.shape[0]-1, num=1000)).astype(np.int)]),
+#                     list)
+
+# %%
+# a = pipe(files, 
+#          get(0), 
+#          wavfile.read, 
+#          get(1),
+#          fn)
+         
+
+# %%
+# b = a[0]
+
+# %%
+# hv.Curve(b) * hv.Curve(a[1])
+
+# %%
+def get_explotion(f, components = 50):
+    try:        
+        return  (pipe(f, 
+                     wavfile.read, 
+                     get(1),
+                     partial(explode, components=components)))
+                        
+
+    except:
+        return [np.zeros(int(round(components))) * np.nan]
+        
 
 # %%
 frequencies_a = (set_a
                  .fname
                  .apply(lambda f: os.path.join(data_path, f))
-                 .apply(get_waveform))
+                 .apply(get_explotion))
 
 # %%
-frequencies_b = pipe(files, pd.Series).apply(get_waveform)
+# frequencies_a = (set_a
+#                  .fname
+#                  .apply(lambda f: os.path.join(data_path, f))
+#                  .apply(compose_left(get_waveform, ))).loc[:,20:]
 
 # %%
-set_a_filtered = set_a.loc[~frequencies_a.isna().all(axis=1),:]
+frequencies_b = (pipe(files, pd.Series)
+                 .apply(get_explotion))
 
 # %%
-pipeline = make_pipeline(StandardScaler(),#PCA(whiten=True),
-                         VAE(hidden_layer_sizes=(5, 3, 2), 
-                             max_iter = 500,
+# frequencies_b = pipe(files, pd.Series).apply(get_waveform).loc[:,20:]
+
+# %%
+set_a_freq = (set_a
+              .assign(frequencies = frequencies_a)
+              .explode('frequencies')
+              .reset_index(drop=True))
+
+# %%
+X_a = set_a_freq.frequencies.apply(pd.Series)
+
+# %%
+set_a_filtered = set_a_freq.loc[~X_a.isna().all(axis=1),:]
+
+# %%
+pipeline = make_pipeline(StandardScaler(),
+                         PCA(whiten=True),
+                         VAE(hidden_layer_sizes=(20, 10, 2), 
+                             max_iter = 1000,
                              activation='tanh'))
 
 # %%
-pipeline.fit(frequencies_b.dropna())
+X_b = (pd.DataFrame({'frequencies':frequencies_b})
+       .explode('frequencies')
+       .reset_index(drop=True)
+       .frequencies
+       .apply(pd.Series))
+
+# %%
+pipeline.fit(X_b.dropna())
 
 # %%
 pipeline.named_steps['vae'].encoder.summary()
 
 # %%
-latent_a = pipeline.transform(frequencies_a.loc[~frequencies_a.isna().all(axis=1),:])
+latent_a = pipeline.transform(X_a.dropna())#.loc[~X_a.isna().all(axis=1),:])
 
 # %%
-latent_a_df = (pd.DataFrame(latent_a, columns = ['Component 1', 'Component 2']).add(np.random.uniform(0,0.1, size=(124,2)))
-               .assign(label = set_a_filtered.label.fillna('None')))
+latent_a_df = (pd.DataFrame(latent_a, columns = ['Component 1', 'Component 2'])
+               .assign(label = set_a_filtered.label.fillna('None'))).sample(500)
 
 # %%
-clips = set_a.loc[~frequencies_a.isna().all(axis=1),'fname'].to_list()
+clips = set_a_filtered.loc[latent_a_df.index,'fname'].to_list()
 
 
 # %%
