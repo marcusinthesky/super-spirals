@@ -46,6 +46,9 @@ hv.extension("bokeh")
 # %%
 from super_spirals.neural_network import VAE
 
+# %% [markdown]
+# ### Load Data
+
 # %%
 data_path = os.path.join("..", "data", "raw", "heatbeat-sounds")
 
@@ -76,6 +79,12 @@ set_b = pipe(data_path,
              lambda f: os.path.join(f, 'set_b.csv'),
              pd.read_csv)
 
+# %% [markdown]
+# ### Preprocess
+
+# %% [markdown]
+# High pass filter
+
 # %%
 filter_signal = lambda a: (pipe(a, 
                                  partial(find_peaks,distance=1000),
@@ -104,23 +113,8 @@ c = pipe(b,
  hv.Scatter(c).opts(color='green')).opts(width=600)
 
 
-# %%
-def get_waveform(f, components=40):
-    try:
-        return (pipe(f,
-                     wavfile.read, 
-                     get(1),
-                     lambda x: x[:20000],
-                     filter_signal,
-                     lambda x: (x)/(np.quantile(np.abs(x), 0.9)),
-                     partial(fft, n=components),
-                     np.real,
-                     filter_signal,
-                     pd.Series))
-                        
-    except:
-        return pd.Series(np.zeros(int(round(components))) * np.nan)
-
+# %% [markdown]
+# split into individual heartbeats, resample to equal length and get Fourier Transform
 
 # %%
 def explode(b, components=10):
@@ -135,32 +129,9 @@ def explode(b, components=10):
                 map(np.real),
                 list)
 
-# %%
-# fn = lambda b: pipe(b,
-#                     partial(find_peaks,distance=1000), 
-#                     get(0),
-#                     sliding_window(2),
-#                     map(lambda x: b[x[0]:x[1]]),
-#                     map(lambda x: (x)/(np.quantile(np.abs(x), 0.9))),
-#                     map(lambda x: x[np.round(np.linspace(0, x.shape[0]-1, num=1000)).astype(np.int)]),
-#                     list)
 
 # %%
-# a = pipe(files, 
-#          get(0), 
-#          wavfile.read, 
-#          get(1),
-#          fn)
-         
-
-# %%
-# b = a[0]
-
-# %%
-# hv.Curve(b) * hv.Curve(a[1])
-
-# %%
-def get_explotion(f, components = 50):
+def get_explotion(f, components = 25):
     try:        
         return  (pipe(f, 
                      wavfile.read, 
@@ -179,23 +150,20 @@ frequencies_a = (set_a
                  .apply(get_explotion))
 
 # %%
-# frequencies_a = (set_a
-#                  .fname
-#                  .apply(lambda f: os.path.join(data_path, f))
-#                  .apply(compose_left(get_waveform, ))).loc[:,20:]
-
-# %%
 frequencies_b = (pipe(files, pd.Series)
                  .apply(get_explotion))
 
-# %%
-# frequencies_b = pipe(files, pd.Series).apply(get_waveform).loc[:,20:]
+# %% [markdown]
+# Merge data with frequencies
 
 # %%
 set_a_freq = (set_a
               .assign(frequencies = frequencies_a)
               .explode('frequencies')
-              .reset_index(drop=True))
+              .reset_index(drop=True)
+              .assign(label = lambda d: d.label.fillna('None'))
+              .where(lambda d: ~ d.label.str.startswith('None'))
+              .dropna(how='all'))
 
 # %%
 X_a = set_a_freq.frequencies.apply(pd.Series)
@@ -204,18 +172,21 @@ X_a = set_a_freq.frequencies.apply(pd.Series)
 set_a_filtered = set_a_freq.loc[~X_a.isna().all(axis=1),:]
 
 # %%
-pipeline = make_pipeline(StandardScaler(),
-                         PCA(whiten=True),
-                         VAE(hidden_layer_sizes=(20, 10, 2), 
-                             max_iter = 1000,
-                             activation='tanh'))
-
-# %%
 X_b = (pd.DataFrame({'frequencies':frequencies_b})
        .explode('frequencies')
        .reset_index(drop=True)
        .frequencies
        .apply(pd.Series))
+
+# %% [markdown]
+# ### Train
+
+# %%
+pipeline = make_pipeline(StandardScaler(),
+                         PCA(whiten=True),
+                         VAE(hidden_layer_sizes=(10, 5, 2), 
+                             max_iter = 1000,
+                             activation='tanh'))
 
 # %%
 pipeline.fit(X_b.dropna())
@@ -223,12 +194,20 @@ pipeline.fit(X_b.dropna())
 # %%
 pipeline.named_steps['vae'].encoder.summary()
 
+# %% [markdown]
+# ### Dashboard
+
 # %%
 latent_a = pipeline.transform(X_a.dropna())#.loc[~X_a.isna().all(axis=1),:])
 
 # %%
 latent_a_df = (pd.DataFrame(latent_a, columns = ['Component 1', 'Component 2'])
-               .assign(label = set_a_filtered.label.fillna('None'))).sample(500)
+               .assign(label = set_a_filtered.label.fillna('None'))
+               .reset_index()
+               .groupby('label')
+               .apply(lambda d: d.sample(50, replace=False))
+               .reset_index(drop=True)
+               .set_index('index'))
 
 # %%
 clips = set_a_filtered.loc[latent_a_df.index,'fname'].to_list()
