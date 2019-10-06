@@ -12,7 +12,21 @@
 #     name: python3
 # ---
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}, "language": "html"}
+# <style>
+# div.input {
+#     display:none;
+# }
+# </style>
+
+# %% {"slideshow": {"slide_type": "skip"}, "language": "html"}
+# <style>
+# div.input {
+#     display:contents;
+# }
+# </style>
+
+# %% {"slideshow": {"slide_type": "skip"}}
 import sys
 from sklearn.datasets import load_iris
 import pandas as pd
@@ -30,16 +44,16 @@ from sklearn.model_selection import train_test_split, KFold
 sys.path.append("../")
 hv.extension("bokeh")
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 from super_spirals.neural_network import VAE
 
-# %% [markdown]
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # # Preliminary Analysis
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 X = load_iris()
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 pipeline = make_pipeline(
     StandardScaler(),
     VAE(
@@ -47,43 +61,60 @@ pipeline = make_pipeline(
     ),
 )
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 pipeline.fit(X=X.data)
 
-# %% [markdown]
-# Inpect model
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# __Inpect model__
 
-# %%
+# %% [markdown] {"slideshow": {"slide_type": "-"}}
+# Encoder
+
+# %% {"slideshow": {"slide_type": "-"}}
 pipeline.named_steps["vae"].encoder.summary()
 
-# %%
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# __Decoder__
+
+# %% {"slideshow": {"slide_type": "-"}}
 pipeline.named_steps["vae"].decoder.summary()
 
-# %% [markdown]
-# Analyze the reconstruced data, used for denoising
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# __Denoising__
 
-# %%
+# %% [markdown] {"slideshow": {"slide_type": "-"}}
+# Original data
+
+# %% {"slideshow": {"slide_type": "-"}}
 # original data
 sample = X.data[:10, :]
-sample
+pipe(sample, 
+     partial(pd.DataFrame, columns=X.feature_names))
 
-# %%
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# 'Denoised' Data
+
+# %% {"slideshow": {"slide_type": "-"}}
 # denoised
-pipe(sample, pipeline.transform, pipeline.inverse_transform)
+pipe(sample, 
+     pipeline.transform, 
+     pipeline.inverse_transform,
+     partial(pd.DataFrame, columns=X.feature_names))
 
-# %% [markdown]
-# Generate new samples
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# __Generate new samples__
 
-# %%
+# %% {"slideshow": {"slide_type": "-"}}
 pipe(
     np.random.multivariate_normal(np.zeros(2), np.diag(np.ones(2)), size=10),
     pipeline.inverse_transform,
+    
 )
 
-# %% [markdown]
-# Analyze clusters
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# __Dimensionality Reduction__
 
-# %%
+# %% {"slideshow": {"slide_type": "-"}}
 # %%output filename='../media/01-iris-latent' fig='png'
 (
     pipe(
@@ -101,4 +132,8 @@ pipe(
     )
 )
 
-# %%
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# __Anomaly Detection__
+
+# %% [markdown] {"slideshow": {"slide_type": "-"}}
+# Assume normal, use Z-scores to filter outliers

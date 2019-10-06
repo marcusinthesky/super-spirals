@@ -12,7 +12,42 @@
 #     name: python3
 # ---
 
-# %%
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# # Manifold Learning
+# 1. Data Exists in Manifold within the high dimensional space  
+# 2. Often non-linear surface
+
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# ### Models
+# - VAE (relu)
+# - VAE (tanh)
+# - PCA
+# - LLE
+# - Isomap
+# - MDS
+# - SpectralEmbedding
+# - TSNE
+
+# %% [markdown] {"slideshow": {"slide_type": "slide"}}
+# ### Data
+# - S-curve  
+# - Swiss Roll  
+
+# %% {"slideshow": {"slide_type": "skip"}, "language": "html"}
+# <style>
+# div.input {
+#     display:none;
+# }
+# </style>
+
+# %% {"slideshow": {"slide_type": "skip"}, "language": "html"}
+# <style>
+# div.input {
+#     display:contents;
+# }
+# </style>
+
+# %% {"slideshow": {"slide_type": "skip"}}
 import sys
 from sklearn.datasets import samples_generator
 import pandas as pd
@@ -30,14 +65,14 @@ from sklearn.model_selection import train_test_split, KFold
 sys.path.append("../")
 hv.extension("bokeh")
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 from super_spirals.neural_network import VAE
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 n_points = 1000
 
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 def get_models():
     return {
         "VAE (relu)": make_pipeline(
@@ -61,7 +96,7 @@ def get_models():
     }
 
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 def get_components(model, X, y, tag):
 
     latent = pipe(
@@ -75,7 +110,7 @@ def get_components(model, X, y, tag):
     return latent.assign(y=y).assign(tag=tag)
 
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 s_curve_models = get_models()
 s_curve_X, s_curve_color = samples_generator.make_s_curve(n_points, random_state=0)
 
@@ -83,7 +118,7 @@ s_curve_components = pd.concat(
     [get_components(m, s_curve_X, s_curve_color, t) for t, m in s_curve_models.items()]
 )
 
-# %%
+# %% {"slideshow": {"slide_type": "slide"}}
 # %%output filename='../media/03-scurve-latent' fig='png'
 (
     s_curve_components.hvplot.scatter(
@@ -94,7 +129,7 @@ s_curve_components = pd.concat(
     .cols(2)
 )
 
-# %%
+# %% {"slideshow": {"slide_type": "skip"}}
 swissroll_models = get_models()
 swissroll_X, swissroll_color = samples_generator.make_swiss_roll(
     n_points, random_state=0
@@ -107,7 +142,7 @@ swissroll_components = pd.concat(
     ]
 )
 
-# %%
+# %% {"slideshow": {"slide_type": "slide"}}
 # %%output filename='../media/03-swissroll-latent' fig='png'
 (
     swissroll_components.hvplot.scatter(
@@ -117,5 +152,3 @@ swissroll_components = pd.concat(
     .opts(title="Swill-roll Manifold", shared_axes=False)
     .cols(2)
 )
-
-# %%
