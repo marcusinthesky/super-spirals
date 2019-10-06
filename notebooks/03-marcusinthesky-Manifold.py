@@ -14,7 +14,7 @@
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # # Manifold Learning
-# 1. Data Exists in Manifold within the high dimensional space  
+# 1. Data Exists in Manifold within the high dimensional space
 # 2. Often non-linear surface
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
@@ -30,8 +30,8 @@
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Data
-# - S-curve  
-# - Swiss Roll  
+# - S-curve
+# - Swiss Roll
 
 # %% {"slideshow": {"slide_type": "skip"}, "language": "html"}
 # <style>

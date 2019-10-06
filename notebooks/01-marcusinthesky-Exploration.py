@@ -88,18 +88,19 @@ pipeline.named_steps["vae"].decoder.summary()
 # %% {"slideshow": {"slide_type": "-"}}
 # original data
 sample = X.data[:10, :]
-pipe(sample, 
-     partial(pd.DataFrame, columns=X.feature_names))
+pipe(sample, partial(pd.DataFrame, columns=X.feature_names))
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # 'Denoised' Data
 
 # %% {"slideshow": {"slide_type": "-"}}
 # denoised
-pipe(sample, 
-     pipeline.transform, 
-     pipeline.inverse_transform,
-     partial(pd.DataFrame, columns=X.feature_names))
+pipe(
+    sample,
+    pipeline.transform,
+    pipeline.inverse_transform,
+    partial(pd.DataFrame, columns=X.feature_names),
+)
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # __Generate new samples__
@@ -108,7 +109,6 @@ pipe(sample,
 pipe(
     np.random.multivariate_normal(np.zeros(2), np.diag(np.ones(2)), size=10),
     pipeline.inverse_transform,
-    
 )
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}

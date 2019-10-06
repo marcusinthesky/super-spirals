@@ -16,9 +16,9 @@
 # # VARIATIONAL AUTOENCODER
 
 # %% [markdown] {"slideshow": {"slide_type": "-"}}
-# Neural Network  
-# Training using back-propogation  
-# Loss = Reconstruction + Regularization + Divergence  
+# Neural Network
+# Training using back-propogation
+# Loss = Reconstruction + Regularization + Divergence
 
 # %% [markdown] {"slideshow": {"slide_type": "-"}}
 # ![](../media/00-vae-diagram.png)

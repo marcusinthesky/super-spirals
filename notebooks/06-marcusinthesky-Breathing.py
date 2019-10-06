@@ -55,10 +55,10 @@ if not os.path.exists(data_path):
         zip_ref.extractall(data_path)
 
 # %%
-database_path = os.path.join(data_path, 'Respiratory_Sound_Database')
+database_path = os.path.join(data_path, "Respiratory_Sound_Database")
 if not os.path.exists(database_path):
     with zipfile.ZipFile(
-        os.path.join(data_path, 'Respiratory_Sound_Database.zip'), "r"
+        os.path.join(data_path, "Respiratory_Sound_Database.zip"), "r"
     ) as zip_ref:
         zip_ref.extractall(data_path)
 
@@ -67,86 +67,92 @@ audio_path = os.path.join(database_path, "audio_and_txt_files")
 
 # %%
 audio_files = pipe(
-                    os.listdir(audio_path),
-                    map(str),
-                    map(lambda f: os.path.join(audio_path, f)),
-                    filter(lambda s: s.endswith('wav')),
-                    list,
-                )
+    os.listdir(audio_path),
+    map(str),
+    map(lambda f: os.path.join(audio_path, f)),
+    filter(lambda s: s.endswith("wav")),
+    list,
+)
 
 # %%
-patient_diagnosis = pipe(database_path,
-                         lambda f: os.path.join(f, 'patient_diagnosis.csv'),
-                         partial(pd.read_csv, names=['patient','diagnosis']))
+patient_diagnosis = pipe(
+    database_path,
+    lambda f: os.path.join(f, "patient_diagnosis.csv"),
+    partial(pd.read_csv, names=["patient", "diagnosis"]),
+)
 
 # %%
-filter_signal = lambda a: (pipe(a, 
-                                 partial(find_peaks,distance=1000),
-                                 get(0), 
-                                 lambda x: pipe(a[x], np.median),
-                                 lambda x: np.where(abs(a) > x, np.sign(a) * x, a),
-                                ))
+filter_signal = lambda a: (
+    pipe(
+        a,
+        partial(find_peaks, distance=1000),
+        get(0),
+        lambda x: pipe(a[x], np.median),
+        lambda x: np.where(abs(a) > x, np.sign(a) * x, a),
+    )
+)
 
 
 # %%
 def get_waveform(f, components=20):
     try:
-        return (pipe(f,
-                     read_wav, 
-                     get(1),
-                     lambda x: x[::250],
-                     lambda x: (x)/(np.quantile(np.abs(x), 0.9)),
-                     partial(fft, n=components),
-                     np.real,
-                     pd.Series))
-                        
+        return pipe(
+            f,
+            read_wav,
+            get(1),
+            lambda x: x[::250],
+            lambda x: (x) / (np.quantile(np.abs(x), 0.9)),
+            partial(fft, n=components),
+            np.real,
+            pd.Series,
+        )
+
     except:
         return pd.Series(np.zeros(components) * np.nan)
 
 
 # %%
-audio_frequencies = (pd.Series(audio_files)
-                     .apply(get_waveform))
+audio_frequencies = pd.Series(audio_files).apply(get_waveform)
 
 # %%
-pipeline = make_pipeline(StandardScaler(),
-                         PCA(whiten=True),
-                         VAE(hidden_layer_sizes=(10, 7, 5, 2), 
-                             max_iter = 500,
-                             activation='tanh'))
+pipeline = make_pipeline(
+    StandardScaler(),
+    PCA(whiten=True),
+    VAE(hidden_layer_sizes=(10, 7, 5, 2), max_iter=500, activation="tanh"),
+)
 
 # %%
 pipeline.fit(audio_frequencies.dropna())
 
 # %%
-pipeline.named_steps['vae'].encoder.summary()
+pipeline.named_steps["vae"].encoder.summary()
 
 # %%
 latent = pipeline.transform(audio_frequencies.dropna())
 
 # %%
-not_null_index = (audio_frequencies
-                  .isna()
-                  .all(1)
-                  .where(lambda x: ~x)
-                  .dropna()
-                  .index
-                  .to_list())
+not_null_index = (
+    audio_frequencies.isna().all(1).where(lambda x: ~x).dropna().index.to_list()
+)
 
 # %%
-latent_df = (pd.DataFrame(latent, columns = ['Component 1', 'Component 2'])
-             .assign(file = pd.Series(audio_files).loc[not_null_index].dropna().reset_index(drop=True))
-             .assign(patient = lambda d: d.file
-                     .str.split('/')
-                     .apply(get(-1))
-                     .str.split('_')
-                     .apply(get(0))
-                     .astype(np.int))
-             .merge(patient_diagnosis,
-                    how='left', 
-                    on='patient')
-             .groupby('diagnosis').apply(lambda d: d.sample(n=100, replace=True))
-             .reset_index(drop=True))
+latent_df = (
+    pd.DataFrame(latent, columns=["Component 1", "Component 2"])
+    .assign(
+        file=pd.Series(audio_files).loc[not_null_index].dropna().reset_index(drop=True)
+    )
+    .assign(
+        patient=lambda d: d.file.str.split("/")
+        .apply(get(-1))
+        .str.split("_")
+        .apply(get(0))
+        .astype(np.int)
+    )
+    .merge(patient_diagnosis, how="left", on="patient")
+    .groupby("diagnosis")
+    .apply(lambda d: d.sample(n=100, replace=True))
+    .reset_index(drop=True)
+)
 
 # %%
 clips = latent_df.file.to_list()
@@ -155,53 +161,50 @@ clips = latent_df.file.to_list()
 # %%
 class Dashboard(param.Parameterized):
     files = pn.widgets.Select(name="Audio Clip", value=clips[0], options=clips)
-    
+
     @pn.depends("files.value")
     def update(self, index):
         if index:
             self.files.value = clips[index[0]]
         wav_file = pipe(self.files.value)
 
-        data = pipe(wav_file, 
-                    read_wav, 
-                    get(1))
+        data = pipe(wav_file, read_wav, get(1))
 
-        time = pipe(data, 
-                    lambda x: x[::10], 
-                    lambda x: x/np.max(np.abs(x)),
-                    hv.Curve).opts(
-            width=400, xlabel="time", ylabel="waveform", height=300
-        )
+        time = pipe(
+            data, lambda x: x[::10], lambda x: x / np.max(np.abs(x)), hv.Curve
+        ).opts(width=400, xlabel="time", ylabel="waveform", height=300)
 
-        frequency = pipe(data, 
-                         partial(fft, n=100), 
-                         np.real, 
-                         lambda x: x/np.max(np.abs(x)),
-                         hv.Curve).opts(
-            xlabel="frequency", ylabel="aplitude", width=400, height=300
-        )
+        frequency = pipe(
+            data,
+            partial(fft, n=100),
+            np.real,
+            lambda x: x / np.max(np.abs(x)),
+            hv.Curve,
+        ).opts(xlabel="frequency", ylabel="aplitude", width=400, height=300)
 
         return time + frequency
 
     @pn.depends("files.value")
     def view(self):
-        
-        latent = latent_df.hvplot.scatter(x='Component 1', 
-                                           y='Component 2',
-                                           color='diagnosis',
-                                           title='Latent Space of Heartbeat FFT',
-                                           width=800,
-                                           height=300,
-                                           tools=['tap'])
-        
+
+        latent = latent_df.hvplot.scatter(
+            x="Component 1",
+            y="Component 2",
+            color="diagnosis",
+            title="Latent Space of Heartbeat FFT",
+            width=800,
+            height=300,
+            tools=["tap"],
+        )
+
         stream = hv.streams.Selection1D(source=latent)
-        
+
         reg = hv.DynamicMap(self.update, kdims=[], streams=[stream])
-        
+
         audio = pn.widgets.Audio(name="Audio", value=pipe(self.files.value))
-        
-        
+
         return pn.Column(latent, reg, audio)
+
 
 # %%
 d = Dashboard()

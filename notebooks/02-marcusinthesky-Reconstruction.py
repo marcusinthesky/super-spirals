@@ -28,22 +28,22 @@
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # # Dimensionality Reduction
-# 1. Compressed representation which capture all relevant structure in the data  
+# 1. Compressed representation which capture all relevant structure in the data
 # 2. Representation useful in supervised and unsupervised learning tasks
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Models
-# 1. VAE (Tanh)  
-# 2. VAE (ReLU) 
-# 3. PCA  
-# 4. ICA  
-# 5. Kernel PCA (RBF)  
-# 6. Kernel PCA (Cosine)  
+# 1. VAE (Tanh)
+# 2. VAE (ReLU)
+# 3. PCA
+# 4. ICA
+# 5. Kernel PCA (RBF)
+# 6. Kernel PCA (Cosine)
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # ### Data
 # 1. Fisher's Iris data
-# 2. UCI ML Wine Data 
+# 2. UCI ML Wine Data
 # 3. UCI ML Breast Cancer Wisconsin (Diagnostic)
 #
 
