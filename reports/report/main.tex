@@ -68,7 +68,7 @@
     \vspace*{0.5 cm}
     \includegraphics[scale = 0.75]{UCT.jpg}\\[1.0 cm]	% University Logo
     \textsc{\LARGE University of Cape Town}\\[2.0 cm]	% University Name
-	\textsc{\Large STA5003W}\\[0.5 cm]				% Course Code
+	\textsc{\Large STA5069Z}\\[0.5 cm]				% Course Code
 	\textsc{\large Multivariate Statistics}\\[0.5 cm]				% Course Name
 	\rule{\linewidth}{0.2 mm} \\[0.4 cm]
 	{ \huge \bfseries \thetitle}\\
@@ -100,12 +100,13 @@
 \begin{abstract}
 
 
-\noindent Variational Autoencoders (VAEs) are a class of generative artificial neural network commonly used for dimensionality reduction in machine learning applications.  In this paper, we implement a stable Variational Autoencoder and benchmark its performance against traditional methods in multivariate statistics using common open data sets. We build on our implementation with two experiments; the first is an application to noncolumnar data in the medical field, and the second is an original generative sampling problem.  
+\noindent Variational Autoencoders (VAEs) are a class of generative artificial neural network commonly used for dimensionality reduction in machine learning applications.  In this paper, we implement a stable Variational Autoencoder and benchmark its performance against traditional methods in multivariate statistics using common open data sets. We build on our implementation with two experiments; the first is an application to noncolumnar data in the medical field, and the second is an original generative sampling problem. 
 
 \end{abstract}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\newpage
 \tableofcontents
 \pagebreak
 
@@ -144,17 +145,12 @@ The Wine dataset \citep{aeberhard_coomans_de_vel_1992} contains results from a c
 The Breast Cancer \citep{street_wolberg_mangasarian_1993} data contains features computed from an image of a fine needle aspirate (FNA). Fine-needle aspiration (FNA) is a diagnostic procedure used to investigate lumps. Using a fine needle cells from the lump are extracted and studied under a microscope, from the image 30 features can be measured that characterise the mass and distinguish it from being Benign or Malignant. 
 
 \subsection{Heartbeats Audio Recordings}
-The Heartbeats dataset \citep{pascal-chsc-2011} will form part of our non column-oriented datasets. \newline 
-Heartbeats is an audio based data set that contains recordings of heartbeats from a stethoscope. There are four classes of audio, artifact, extrahls, murmer and normal. The data set was originally created to identify S1 (dub) and S2 (dub) sounds and classify beats into one of the four classes.  
-
+The Heartbeats dataset \citep{pascal-chsc-2011} is an audio data set that contains recordings of heartbeats from a two stethoscope apps. There are four classes of audio, artifact, extrahls, murmer and normal. The data set was originally created to identify S1 (dub) and S2 (dub) sounds and classify beats into one of the four classes.  
+\newpage
 \section{Analysis}
 In the literature, we have seen a variety of VAE implementations to solve multivariate problems. In this section, we present benchmark the applications of VAEs to problems in dimensionality reduction for clustering and manifold learning. We also demonstrate the application of VAEs to real-world datasets from the medical field and test an original generative modelling example. 
-
 \subsection{Benchmarking}
-
 \subsubsection{Dimensionality reduction for clustering}
-
-
 Clustering high dimensional data can be difficult as regions in the space become increasingly sparse and data tends to equidistance. To solve this 'curse of dimensionality', dimensionality reduction is often applied in order to control for the correlation between dimensions and to aid in identifying separable clusters. We explored the feasibility of using a VAE to map high dimensional data to a lower-dimensional space for use in clustering.
 
 We trained VAEs, on the Iris, Cancer and Wine dataset and visualised their latent space. As a benchmark, we also implemented Principal Component Analysis (PCA), Independent Component Analysis (ICA) and Kernal Principal Component Analysis (KPCA). Figures \ref{fig:benchirislatent}, \ref{fig:benchcancerlatent} and \ref{fig:benchwinelatent} show the input data mapped to the latent space, point is coloured according to class. 
@@ -171,43 +167,17 @@ Figure \ref{fig:clustering} shows the silhouette scores for each method trained 
 
 
 \subsubsection{Manifold Learning}
+Linear projection methods such a PCA  are quite useful at finding low dimensional structure when the data lies in an approximately linear subspace called a manifold.  A manifold is a topological space that resembles a euclidean space within the neighbourhood of a point in the manifold space. When the input data lies on a non-linear manifold, linear methods fail to maintain its local structure such as geodesic distances.  Given that neural networks are well suited to operate on non-linear data, we tested whether a VAE could learn a non-linear 2-dimensional manifold and benchmarked it to other manifold learning techniques, more specifically, PCA, Isomaps, Locally Linear Embedding (LLE), Multidimensional Scaling (MDS), Spectral Embedding and t-distributed Stochastic Neighbor Embedding (t-SNE). While we do not expect the Variational Autoencoder to capture manifold learning tasks, we aim to identify the robustness of the method to highly non-linear data as compared to PCA.  
 
 
-% [Follow up with marcus on some talking points here.]
+We generated two input datasets, an S-curve and a Swiss Roll in $\mathbb{R}^{3}$ and coloured points according to a rainbow colour spectrum to offer visual guidance. The learned manifolds are presented in figures \ref{fig:scurve} and \ref{fig:swissroll}. \\
 
+For the S-Curve, the Isomap seems to produce the best representation of the manifold. The method is capable of preserving the clusters in the input space, and the curvature does not appear to hinder its ability to unroll the S. The Spectral Embedding also produces a decent representation, the difference here is that it reduces the variation in observations of the same colour.  The VAEs are unable to learn the manifold; both seem to struggle to capture the geodesic distances necessary to produce lower-dimensional representation. The  Relu activation suffers the most as some of the red colour observations are not represented in the latent space. The Tanh performs slightly better and similar to the MDS as it is capable of preserving the clusters of the input space.\\
 
+The Swiss roll problem adds a layer of complexity by introducing non-linear spiralling. The Isomap and TSNE produce a good representation of the manifold, once again being able to preserve clusters and deal with curvature. Both VAEs struggle to learn the manifold, the geodesic distances are not accounted for, but they are capable of maintaining some form of clustering. The Relu activation improves slightly as all observations are represented in the latent space. The Tanh activation is close as we can see that it is close at representing the spiral structure of the data. \\
 
+While in both examples the Isomap and the TSNE methods produce favourable results, they are known to be the most computationally expensive and so they may not be well suited for large datasets. On the other hand, VAEs have failed to learn the manifold but allow for non-linear representations that are superior to PCA and MDS. 
 \newpage
-%\subsubsection{Data compression and Reconstruction}
-% denoising signals.
-% withing the data to
-% efficiency of the latent space information efficiency of the latent space
-
-%\newpage
-%Data compression and
-%\begin{figure}
-%     \centering
-%     \begin{subfigure}
-%         \centering
-%         \includegraphics[scale=0.5]{media/02-iris-loss.png}
-         
-%         \label{fig:benchiriss}
-%     \end{subfigure}
-%     
-%     \begin{subfigure}
-%         \centering
-%         \includegraphics[scale=0.5]{media/02-cancer-loss.png}
-%         \label{fig:benchcancers}
-%     \end{subfigure}
-%     \begin{subfigure}
-%         \centering
-%         \includegraphics[scale=0.5]{media/02-wine-loss.png}
-%         \label{fig:benchwines}
-%     \end{subfigure}
-%     \caption{Reconstruction Loss}
-%        \label{fig:reconstruction}
-%\end{figure}
-
 
 
 
@@ -249,12 +219,12 @@ Figure \ref{fig:clustering} shows the silhouette scores for each method trained 
 For the application section of this report, a public medical dataset of patient heartbeats was chosen. This dataset, provided by \citet{pascal-chsc-2011}, was gathered from both general public via the iStethoscope Pro iPhone app, and from clinical trials in hospitals using the digital stethoscope DigiScope. Many of these 832 are noisy and contain artefacts in the data. The dataset has labels for the recordings, marking them as recording either normal heartbeats, recordings with heart murmurs or extrahls or recordings with noise artefacts which make classification by physicians challenging. Even though the distributions of subsets of the data may be different the aims of this task was to use the data collected from the clinical trial using the digital stethoscope DigiScope to train a Variational Autoencoder to encode data from the iStethoscope Pro iPhone app collected from the general public and identify whether, using this data we could accurately identify recordings with artefacts, as well as heart conditions.  
 
 \textbf{Data processing}\newline
-The original data structure was stored in wav files. A wav file is a raw uncompressed audio file that stores audio data, sample rate, and bit rate. The sample rate was 44,100Hz per second, and so in the time domain, there are too many observations to efficient perform machine learning. Data was read from the wav files and normalized in order to ensure that the audio tracks were roughly the same volume.  A simple filter was used in order to clip loud pops from the recordings and split in individual heartbeats by searching for extrema in the signal from within a specified neighbourhood of one-thousand time-steps and then subsampling to ensure the recordings were of equal length.  By splitting the data into individual heartbeats, we massively increased the sample size and also managed to better control for elements of the waveform which determined heart-rate as opposed to artefacts, heart murmurs or normal heartbeats.  We used a Fast Fourier Transform (FFT) method to transform the high dimensional audio data from an amplitude-time domain to an amplitude-frequency domain of 40 dimensions. The final dataset yielded 11483 samples of heartbeats for in training our model.  
+The original data structure was stored in wav files. A wav file is a raw uncompressed audio file that stores audio data, sample rate, and bit rate. The sample rate was 44,100Hz per second, and so in the time domain, there are too many observations to perform efficient machine learning. Data was read from the wav files and normalized in order to ensure that the audio tracks were roughly the same volume.  A simple filter was used in order to clip loud pops from the recordings and split in individual heartbeats by searching for extrema in the signal from within a specified neighbourhood of one-thousand time-steps and then subsampling to ensure the recordings were of equal length.  By splitting the data into individual heartbeats, we massively increased the sample size and also managed to better control for elements of the waveform which determined heart-rate as opposed to artefacts, heart murmurs or normal heartbeats.  We used a Fast Fourier Transform (FFT) method to transform the high dimensional audio data from an amplitude-time domain to an amplitude-frequency domain of 40 dimensions. The final dataset yielded 11483 samples of heartbeats for in training our model.  
 
 While we did experiment with various hyper-parameters our final Variational Autoencoder featured 594 parameters on the encoder with two hidden layers of 15 and 10 nodes each using the tanh activation function, the model was trained over 1000 epochs using the ADAM optimizer with an l2 regularization term of 0.0001 and a one-to-one weighting between our reconstruction loss and the weighting of our KL Divergence term.   
 
 \textbf{Results} \\
-Figure \ref{fig:hearts} shows the latent space of the trained VAE across three random initializations.  While the data is characterized by imperfect sample recordings, based on the figure \ref{fig:hearts} and results of tables \ref{table:heartbeatcomponent1} and \ref{table:heartbeatcomponent2}, we can see that the model tends to separate our the data artefacts at the tails of the distribution, with normal heartbeats closest to the mean.  This suggests that for data-cleaning and anomaly detection, the Variational Autoencoder may present value to further downstream analysis.  
+Figure \ref{fig:hearts} shows the latent space of the trained VAE across three random initializations. Relative to other toy deep learning data set sizes the heartbeats dataset is quite small and while the data is characterized by imperfect sample recordings, based on the figure \ref{fig:hearts} and results of tables \ref{table:heartbeatcomponent1} and \ref{table:heartbeatcomponent2}, we can see that the model tends to separate our the data artefacts at the tails of the distribution, with normal heartbeats closest to the mean.  This suggests that for data-cleaning and anomaly detection, the Variational Autoencoder may present value to further downstream analysis.   
 
 
 
@@ -298,7 +268,13 @@ Figure \ref{fig:generative} shows the newly sampled data superimposed with the o
   
 While the model architecture and choice of loss function weighting make a huge difference in the stability and capacity of the model to generate samples accurately, it is clear that these methods rely on the correlations in the data in order to accurately embed the data in a lower-dimensional space. This is not easy for all datasets, as shown when given non-symmetric data from the truncated Bivariate Gaussian.  
 
+\newpage
+\section{Conclusion}
+Variational Autoencoders (VAEs) are a class of generative artificial neural networks that have grown in popularity due to their unique ability to learn the distribution of high dimensional datasets, such as images and audio, and generate new samples. In this assignment, we explored this class of networks by conducting three sets of experiments. We benchmarked VAEs dimensionality reduction ability to other multivariate techniques using linear and non-linear datasets. We then applied a VAE to a public medical dataset of patient heartbeats. And lastly, we tested their generative modelling ability simulated dataset. The benchmarking experiments showed that VAEs are quite sensitive to hyperparameter tuning and that maintaining consistent performance relative to the other methods is challenging. With simpler datasets, the VAE was able to learn lower-dimensional representations without losing too much information. With the more complicated non-linear datasets, the VAE performed better than the PCA and MDS methods but was unable to learn the geodesic distances. The application to the medical dataset showed that VAEs could be a suitable anomaly detection tool. The idea of VAEs for anomaly detection was also seen in the literature review. The generative modelling proved to be the hardest to get right despite being a straight forward problem. Although VAEs have been shown to perform well for images sampling, we saw that this is not easy for all datasets such as the truncated gaussian distribution.  We highlight the fact that VAEs are highly flexible machines. Deeper networks are latent space distributional assumptions can produce significantly varying results that could perform better than what we presented. If anything, we have demonstrated the difficulty in fitting lightweight  VAEs to datasets that go outside the typical image set. 
 
+
+
+\newpage
 \section{Appendixes}
 \subsection{Benchmarking}
 
@@ -347,8 +323,8 @@ While the model architecture and choice of loss function weighting make a huge d
 
 \newpage
 
-\subsection{Manifold Learning}
 
+\subsection{Manifold Learning}
 \begin{figure}[!htb]
     \includegraphics[scale =0.3]{../../media/03-scurve-latent.png}
     \caption{S-Curve Manifold Learning}
@@ -361,7 +337,6 @@ While the model architecture and choice of loss function weighting make a huge d
     \caption{Swiss Roll manifold learning}
     \label{fig:swissroll}
 \end{figure}
-
 
 \newpage
 \subsection{Heartbeats Audio}
@@ -420,12 +395,12 @@ While the model architecture and choice of loss function weighting make a huge d
 
 
 \newpage
-\subsection{Code}
-\nocite{Basquin2018, Scipy, scikit-learn}
-\subsubsection{Exploratory Analysis}
-\lstinputlisting[language=Python]{../../notebooks/01-marcusinthesky-Exploration.py}
-\subsubsection{Dataset Benchmark Code}
-\lstinputlisting[language=Python]{../../notebooks/02-marcusinthesky-Reconstruction.py}
+%\subsection{Code}
+%\nocite{Basquin2018, Scipy, scikit-learn}
+%\subsubsection{Exploratory Analysis}
+%\lstinputlisting[language=Python]{../../notebooks/01-marcusinthesky-Exploration.py}
+%\subsubsection{Dataset Benchmark Code}
+%\lstinputlisting[language=Python]{../../notebooks/02-marcusinthesky-Reconstruction.py}
 \subsubsection{Manifold Learning Comparison}
 \lstinputlisting[language=Python]{../../notebooks/03-marcusinthesky-Manifold.py}
 \subsubsection{Latent Space Sampling}
@@ -440,8 +415,8 @@ While the model architecture and choice of loss function weighting make a huge d
 
 
 \newpage
-\subsection{Environment}
-\lstinputlisting{../../environment.yml}
+%\subsection{Environment}
+%\lstinputlisting{../../environment.yml}
 
 \bibliographystyle{bibstyle}
 \bibliography{biblist}
