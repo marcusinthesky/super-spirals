@@ -1,13 +1,12 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 from toolz.curried import *
-from keras.layers import Lambda, Input, Dense
-from keras.models import Model
-from keras.datasets import mnist
-from keras.losses import mse, binary_crossentropy
-from keras.utils import plot_model
-from keras import backend as K
-from keras.regularizers import l2
+from tensorflow.keras.layers import Lambda, Input, Dense
+from tensorflow.keras.models import Model
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.losses import mse, binary_crossentropy
+from tensorflow.keras.regularizers import l2
+import tensorflow as tf
 
 
 def sampling(args):
@@ -21,11 +20,11 @@ def sampling(args):
     """
 
     z_mean, z_log_var = args
-    batch = K.shape(z_mean)[0]
-    dim = K.int_shape(z_mean)[1]
+    batch = tf.shape(z_mean)[0]
+    dim = tf.shape(z_mean)[1]
     # by default, random_normal has mean = 0 and std = 1.0
-    epsilon = K.random_normal(shape=(batch, dim))
-    return z_mean + K.exp(0.5 * z_log_var) * epsilon
+    epsilon = tf.random.normal(shape=(batch, dim))
+    return z_mean + tf.math.exp(0.5 * z_log_var) * epsilon
 
 
 class VAE(BaseEstimator, TransformerMixin):
@@ -145,10 +144,10 @@ class VAE(BaseEstimator, TransformerMixin):
         #                                                       outputs)
 
         reconstruction_loss *= layers[0]
-        kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-        kl_loss = K.sum(kl_loss, axis=-1)
+        kl_loss = 1 + z_log_var - tf.square(z_mean) - tf.math.exp(z_log_var)
+        kl_loss = tf.reduce_sum(kl_loss, axis=-1)
         kl_loss *= -0.5
-        vae_loss = K.mean(reconstruction_loss + self.divergence_weight * kl_loss)
+        vae_loss = tf.reduce_mean(reconstruction_loss + self.divergence_weight * kl_loss)
 
         vae.add_loss(vae_loss)
         vae.compile(optimizer=self.solver)
@@ -196,7 +195,7 @@ class VAE(BaseEstimator, TransformerMixin):
         """
         """
         dim = self.hidden_layer_sizes[-1]
-        N = np.random.multivariate_normal(np.zeros(dim), np.diag(np.ones(dim)), size=n)
+        N = tf.random.normal(tf.zeros(dim), tf.eye(dim), size=(n,))
         return self.decoder.predict(N)
 
     def inverse_transform(self, Xt: np.ndarray):
