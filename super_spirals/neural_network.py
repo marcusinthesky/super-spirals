@@ -3,11 +3,11 @@ import numpy as np
 from toolz.curried import *
 from tensorflow.keras.layers import Lambda, Input, Dense
 from tensorflow.keras.models import Model
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras.losses import mse, binary_crossentropy
+from tensorflow.keras.losses import mse
 from tensorflow.keras.regularizers import l2
 import tensorflow as tf
 import tensorflow_probability as tfp
+import warnings
 
 
 def sampling(args):
@@ -146,7 +146,9 @@ class VAE(BaseEstimator, TransformerMixin):
         kl_loss = 1 + z_log_var - tf.square(z_mean) - tf.math.exp(z_log_var)
         kl_loss = tf.reduce_sum(kl_loss, axis=-1)
         kl_loss *= -0.5
-        vae_loss = tf.reduce_mean(reconstruction_loss + self.divergence_weight * kl_loss)
+        vae_loss = tf.reduce_mean(
+            reconstruction_loss + self.divergence_weight * kl_loss
+        )
 
         vae.add_loss(vae_loss)
         vae.compile(optimizer=self.solver)
@@ -274,23 +276,29 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
             lambda f: compose_left(*f),
         )
 
-        
+        latent_layer = Dense(
+            tfp.layers.IndependentNormal.params_size(latent_dim), name="z_dist"
+        )
 
-        latent_layer = Dense(tfp.layers.IndependentNormal.params_size(latent_dim), name='z_dist')
-
-        prior = tfp.distributions.Independent(tfp.distributions.Normal(loc=tf.zeros(latent_dim), scale=1),
-        reinterpreted_batch_ndims=1)
+        prior = tfp.distributions.Independent(
+            tfp.distributions.Normal(loc=tf.zeros(latent_dim), scale=1),
+            reinterpreted_batch_ndims=1,
+        )
 
         probability_layer = tfp.layers.IndependentNormal(
-        latent_dim,
-        activity_regularizer=tfp.layers.KLDivergenceRegularizer(prior, weight=self.divergence_weight)
+            latent_dim,
+            activity_regularizer=tfp.layers.KLDivergenceRegularizer(
+                prior, weight=self.divergence_weight
+            ),
         )
 
         z = pipe(inputs, transformations, latent_layer, probability_layer)
 
         # note that "output_shape" isn't necessary with the TensorFlow backend
         # instantiate encoder model
-        encoder = Model(inputs, z, name='encoder')#[z_mean, z_log_var, z], name="encoder")
+        encoder = Model(
+            inputs, z, name="encoder"
+        )  # [z_mean, z_log_var, z], name="encoder")
 
         return encoder
 
@@ -312,7 +320,9 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
             lambda f: compose_left(*f),
         )
 
-        final_layer = Dense(tfp.layers.IndependentNormal.params_size(original_dim), name="original_dim")
+        final_layer = Dense(
+            tfp.layers.IndependentNormal.params_size(original_dim), name="original_dim"
+        )
         probability_layer = tfp.layers.IndependentNormal(original_dim)
 
         outputs = pipe(latent_inputs, transformations, final_layer, probability_layer)
@@ -327,11 +337,12 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         self.decoder = self.build_decoder_(reversed(layers))
 
         # outputs = pipe(inputs, self.encoder, self.decoder) #get(2),
-        vae = Model(self.encoder.inputs, self.decoder(self.encoder.outputs[0]), name="vae_mlp")
+        vae = Model(
+            self.encoder.inputs, self.decoder(self.encoder.outputs[0]), name="vae_mlp"
+        )
 
         negative_log_likelihood = lambda x, rv_x: -rv_x.log_prob(x)
-        vae.compile(optimizer = self.solver, 
-                    loss = negative_log_likelihood)
+        vae.compile(optimizer=self.solver, loss=negative_log_likelihood)
 
         return vae
 
@@ -342,7 +353,7 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
 
         self.model = self.build_model_(layers)
 
-        n_samples = x.shape[0]
+        n_samples = X.shape[0]
         if self.solver == self.solver:
             self.batch_size = n_samples
         elif self.batch_size == self.solver:
@@ -356,7 +367,8 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
             self.batch_size = np.clip(self.batch_size, 1, n_samples)
 
         self.model.fit(
-            X,X,
+            X,
+            X,
             epochs=self.max_iter,
             batch_size=self.batch_size,
             validation_split=self.validation_fraction,

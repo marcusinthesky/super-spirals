@@ -66,7 +66,7 @@ sys.path.append("../")
 hv.extension("bokeh")
 
 # %% {"slideshow": {"slide_type": "skip"}}
-from super_spirals.neural_network import VAE
+from super_spirals.neural_network import LikelihoodVAE
 
 # %% {"slideshow": {"slide_type": "skip"}}
 n_points = 1000
@@ -77,11 +77,11 @@ def get_models():
     return {
         "VAE (relu)": make_pipeline(
             StandardScaler(),
-            VAE(activation="relu", max_iter=300, hidden_layer_sizes=(4, 5, 2)),
+            LikelihoodVAE(activation="relu", max_iter=300, hidden_layer_sizes=(4, 5, 2)),
         ),
         "VAE (tanh)": make_pipeline(
             StandardScaler(),
-            VAE(activation="tanh", max_iter=300, hidden_layer_sizes=(4, 5, 2)),
+            LikelihoodVAE(activation="tanh", max_iter=300, hidden_layer_sizes=(4, 5, 2)),
         ),
         "PCA": make_pipeline(StandardScaler(), PCA(n_components=2)),
         "LLE": make_pipeline(
