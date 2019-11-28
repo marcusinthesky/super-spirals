@@ -57,7 +57,7 @@ X = load_iris()
 pipeline = make_pipeline(
     StandardScaler(),
     VAE(
-        hidden_layer_sizes=(5, 2), activation="tanh", divergence_weight=5, max_iter=500
+        hidden_layer_sizes=(5, 2), activation="tanh", divergence_weight=5, max_iter=100
     ),
 )
 
