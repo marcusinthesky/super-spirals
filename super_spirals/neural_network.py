@@ -63,10 +63,14 @@ class VAE(BaseEstimator, TransformerMixin):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
-        if solver == "auto":
-            self.solver = "adam"
+        if solver == "auto" or solve.title() == 'Adam':
+            self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
+                                                beta_1 = beta_1,
+                                                beta_2 = beta_2,
+                                                epsilon = epsilon)
         else:
-            self.solver = solver
+            self.solver = getattr(tf.keras.optimizers, solver.title())(learning_rate=learning_rate_init)
+
         self.divergence_weight = divergence_weight
         self.model = None
         self.validation_fraction = validation_fraction
@@ -164,10 +168,8 @@ class VAE(BaseEstimator, TransformerMixin):
         self.model = self.build_model_(layers)
 
         n_samples = x.shape[0]
-        if self.solver == self.solver:
-            self.batch_size = n_samples
-        elif self.batch_size == self.solver:
-            self.batch_size = min(200, n_samples)
+        if self.batch_size == None:
+            self.batch_size = 32
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
                 warnings.warn(
@@ -250,10 +252,14 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
-        if solver == "auto":
-            self.solver = "adam"
+        if solver == "auto" or solve.title() == 'Adam':
+            self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
+                                                beta_1 = beta_1,
+                                                beta_2 = beta_2,
+                                                epsilon = epsilon)
         else:
-            self.solver = solver
+            self.solver = getattr(tf.keras.optimizers, solver.title())(learning_rate=learning_rate_init)
+
         self.divergence_weight = divergence_weight
         self.model = None
         self.validation_fraction = validation_fraction
@@ -354,10 +360,8 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         self.model = self.build_model_(layers)
 
         n_samples = X.shape[0]
-        if self.solver == self.solver:
-            self.batch_size = n_samples
-        elif self.batch_size == self.solver:
-            self.batch_size = min(200, n_samples)
+        if self.batch_size == None:
+            self.batch_size = 32
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
                 warnings.warn(

@@ -70,7 +70,7 @@ sys.path.append("../")
 hv.extension("bokeh")
 
 # %% {"slideshow": {"slide_type": "skip"}}
-from super_spirals.metrics import reconstruction_benchmark
+from super_spirals.reports import reconstruction_benchmark
 from super_spirals.neural_network import VAE
 
 
