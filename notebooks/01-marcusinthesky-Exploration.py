@@ -45,7 +45,7 @@ sys.path.append("../")
 hv.extension("bokeh")
 
 # %% {"slideshow": {"slide_type": "skip"}}
-from super_spirals.neural_network import LikelihoodVAE
+from super_spirals.neural_network import LikelihoodVAE, VAE
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # # Preliminary Analysis

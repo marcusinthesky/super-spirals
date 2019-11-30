@@ -59,11 +59,11 @@ class VAE(BaseEstimator, TransformerMixin):
         """
         self.alpha = alpha
         self.regularizer = l2(alpha)
-
+        self.batch_size = batch_size
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
-        if solver == "auto" or solve.title() == 'Adam':
+        if solver == "auto" or solver.title() == 'Adam':
             self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
                                                 beta_1 = beta_1,
                                                 beta_2 = beta_2,
@@ -95,8 +95,8 @@ class VAE(BaseEstimator, TransformerMixin):
 
         x = pipe(inputs, transformations)
 
-        z_mean = Dense(latent_dim, name="z_mean")(x)
-        z_log_var = Dense(latent_dim, name="z_log_var")(x)
+        z_mean = Dense(latent_dim, activation='linear', name="z_mean")(x)
+        z_log_var = Dense(latent_dim, activation='linear', name="z_log_var")(x)
 
         # use reparameterization trick to push the sampling out as input
         z = Lambda(sampling, output_shape=(latent_dim,), name="z")([z_mean, z_log_var])
@@ -124,7 +124,9 @@ class VAE(BaseEstimator, TransformerMixin):
             ),
             lambda f: compose_left(*f),
         )
-        final_layer = Dense(original_dim, name="original_dim")
+        final_layer = Dense(original_dim, 
+                            activation='linear', 
+                            name="original_dim")
 
         outputs = pipe(latent_inputs, transformations, final_layer)
 
@@ -159,16 +161,16 @@ class VAE(BaseEstimator, TransformerMixin):
 
         return vae
 
-    def fit(self, x: np.ndarray, y: np.ndarray = None):
+    def fit(self, X: np.ndarray, y: np.ndarray = None):
         """
         """
-        layers = x.shape[1], *self.hidden_layer_sizes
+        layers = X.shape[1], *self.hidden_layer_sizes
 
         #         if self.model is None:
         self.model = self.build_model_(layers)
 
-        n_samples = x.shape[0]
-        if self.batch_size == None:
+        n_samples = X.shape[0]
+        if self.batch_size == None or self.batch_size == 'auto':
             self.batch_size = 32
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
@@ -179,7 +181,7 @@ class VAE(BaseEstimator, TransformerMixin):
             self.batch_size = np.clip(self.batch_size, 1, n_samples)
 
         self.model.fit(
-            x,
+            X,
             epochs=self.max_iter,
             batch_size=self.batch_size,
             validation_split=self.validation_fraction,
@@ -248,11 +250,11 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         """
         self.alpha = alpha
         self.regularizer = l2(alpha)
-
+        self.batch_size = batch_size
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
-        if solver == "auto" or solve.title() == 'Adam':
+        if solver == "auto" or solver.title() == 'Adam':
             self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
                                                 beta_1 = beta_1,
                                                 beta_2 = beta_2,
@@ -283,7 +285,9 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         )
 
         latent_layer = Dense(
-            tfp.layers.IndependentNormal.params_size(latent_dim), name="z_dist"
+            tfp.layers.IndependentNormal.params_size(latent_dim),
+            activation='linaer',
+            name="z_dist"
         )
 
         prior = tfp.distributions.Independent(
@@ -327,7 +331,9 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         )
 
         final_layer = Dense(
-            tfp.layers.IndependentNormal.params_size(original_dim), name="original_dim"
+            tfp.layers.IndependentNormal.params_size(original_dim), 
+            activation=linear,
+            name="original_dim"
         )
         probability_layer = tfp.layers.IndependentNormal(original_dim)
 
@@ -360,7 +366,7 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         self.model = self.build_model_(layers)
 
         n_samples = X.shape[0]
-        if self.batch_size == None:
+        if self.batch_size == None or self.batch_size == 'auto':
             self.batch_size = 32
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:

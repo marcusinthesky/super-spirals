@@ -2,8 +2,11 @@ import tensorflow as tf
 from sklearn.base import BaseEstimator, TransformerMixin
 from toolz.curried import *
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras.layers import Lambda, Input, Dense
+from tensorflow.keras.models import Model
 from super_spirals.metrics.scorer import tsne_loss
 import numpy as np
+
 
 
 class ParametricTSNE(BaseEstimator, TransformerMixin):
@@ -131,13 +134,13 @@ class ParametricTSNE(BaseEstimator, TransformerMixin):
                  hidden_layer_sizes: tuple = (25, 2),
                  activation: str = "relu",
                  solver: str = "adam",
-                 n_iter=1000,
+                 n_iter=20,
                  alpha: float = 0.0001,
                  batch_size: str = "auto",
                  learning_rate: str = "constant",
                  learning_rate_init: float = 0.001,
                  power_t: float = 0.5,
-                 max_iter: int = 200,
+                 max_iter: int = 20,
                  shuffle: bool = True,
                  random_state=None,
                  n_iter_without_progress=300,
@@ -151,9 +154,12 @@ class ParametricTSNE(BaseEstimator, TransformerMixin):
                  beta_2: float = 0.999,
                  epsilon: float = 1e-08,
                  n_iter_no_change=10):
+        self.perplexity = perplexity
+        self.norm_order_input = norm_order_input
+        self.norm_order_latent = norm_order_latent
+        self.batch_size = batch_size
         self.alpha = alpha
         self.regularizer = l2(alpha)
-
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
         self.max_iter = max_iter
@@ -165,13 +171,10 @@ class ParametricTSNE(BaseEstimator, TransformerMixin):
         else:
             self.solver = getattr(tf.keras.optimizers, solver.title())(learning_rate=learning_rate_init)
 
-        self.n_components = n_components
-        self.perplexity = perplexity
         self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.validation_fraction = validation_fraction
         self.n_iter_without_progress = n_iter_without_progress
-        self.metric = metric
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
@@ -193,9 +196,9 @@ class ParametricTSNE(BaseEstimator, TransformerMixin):
             lambda f: compose_left(*f),
         )
 
-        x = pipe(inputs, transformations)
+        final_layer = pipe(inputs, transformations)
 
-        z = Dense(latent_dim, name="z_mean")(x)
+        z = Dense(latent_dim, activation='linear', name="z_mean")(final_layer)
 
         # note that "output_shape" isn't necessary with the TensorFlow backend
         # instantiate encoder model
@@ -207,21 +210,24 @@ class ParametricTSNE(BaseEstimator, TransformerMixin):
         inputs, encoder, z = self.build_encoder_(layers)
 
         encoder.compile(optimizer=self.solver,
-                        loss = lambda y_true, y_pred: tsne_loss(y_true, y_pred, p_true=4/3, p_pred=2, perpexity=30.))
+                        loss = lambda y_true, y_pred: tsne_loss(y_true, y_pred, 
+                                                                p_true=self.norm_order_input, 
+                                                                p_pred=self.norm_order_latent, 
+                                                                perpexity=self.perplexity))
         
         return encoder
 
-    def fit(self, x: np.ndarray, y: np.ndarray = None):
+    def fit(self, X: np.ndarray, y: np.ndarray = None):
         """
         """
-        layers = x.shape[1], *self.hidden_layer_sizes
+        layers = X.shape[1], *self.hidden_layer_sizes
 
         #         if self.model is None:
         self.model = self.build_model_(layers)
 
 
-        n_samples = x.shape[0]
-        if self.batch_size == None:
+        n_samples = X.shape[0]
+        if self.batch_size == None or self.batch_size == 'auto':
             self.batch_size = 32
         else:
             if self.batch_size < 1 or self.batch_size > n_samples:
@@ -232,7 +238,7 @@ class ParametricTSNE(BaseEstimator, TransformerMixin):
             self.batch_size = np.clip(self.batch_size, 1, n_samples)
 
         self.model.fit(
-            x,
+            X, X,
             epochs=self.max_iter,
             batch_size=self.batch_size,
             validation_split=self.validation_fraction,
