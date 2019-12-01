@@ -1,4 +1,5 @@
 from sklearn.base import BaseEstimator, TransformerMixin
+from super_spirals.layers import MMDDivergenceRegularizer
 import numpy as np
 from toolz.curried import *
 from typing import Union, Tuple, List
@@ -11,6 +12,7 @@ from abc import ABCMeta
 class VAE(tf.keras.Model, BaseEstimator, TransformerMixin):
     def __init__(self,
                  reconstruction_loss: callable = 'negative_log_likelihood',
+                 divergence_loss: str = 'kl',
                  elbo_weight: float = 1.0,
                  hidden_layer_sizes: Tuple[int] = (4, 2),
                  alpha: float = 0.01,
@@ -54,9 +56,15 @@ class VAE(tf.keras.Model, BaseEstimator, TransformerMixin):
             reinterpreted_batch_ndims=1,
         )
 
+        
+        if divergence_loss is 'kl':
+            divergence_regularizer = tfp.layers.KLDivergenceRegularizer
+        elif divergence_loss is 'mmd':
+            divergence_regularizer = MMDDivergenceRegularizer
+
         self.probability_layer = tfp.layers.IndependentNormal(
             latent_unit,
-            activity_regularizer=tfp.layers.KLDivergenceRegularizer(
+            activity_regularizer=divergence_regularizer(
                 prior, weight=elbo_weight
             ),
         )
