@@ -3,14 +3,14 @@ import numpy as np
 from toolz.curried import *
 from tensorflow.keras.layers import Lambda, Input, Dense
 from tensorflow.keras.models import Model
-from tensorflow.keras.losses import mse
+from tensorflow.keras import losses
 from tensorflow.keras.regularizers import l2
 import tensorflow as tf
 import tensorflow_probability as tfp
 import warnings
 
 
-def sampling(args):
+def _sampling(args):
     """Reparameterization trick by sampling from an isotropic unit Gaussian.
     # Arguments
         args (tensor): mean and log of variance of Q(z|X)
@@ -38,6 +38,7 @@ class VAE(BaseEstimator, TransformerMixin):
         alpha: float = 0.0001,
         batch_size: str = "auto",
         learning_rate: str = "constant",
+        loss: str = 'mse',
         learning_rate_init: float = 0.001,
         power_t: float = 0.5,
         max_iter: int = 200,
@@ -57,7 +58,9 @@ class VAE(BaseEstimator, TransformerMixin):
     ):
         """
         """
+        self.loss = loss
         self.alpha = alpha
+        self.reconstruction_loss = getattr(losses, self.loss.title())(inputs, outputs)
         self.regularizer = l2(alpha)
         self.batch_size = batch_size
         self.hidden_layer_sizes = hidden_layer_sizes
@@ -99,7 +102,7 @@ class VAE(BaseEstimator, TransformerMixin):
         z_log_var = Dense(latent_dim, activation='linear', name="z_log_var")(x)
 
         # use reparameterization trick to push the sampling out as input
-        z = Lambda(sampling, output_shape=(latent_dim,), name="z")([z_mean, z_log_var])
+        z = Lambda(_sampling, output_shape=(latent_dim,), name="z")([z_mean, z_log_var])
 
         # note that "output_shape" isn't necessary with the TensorFlow backend
         # instantiate encoder model
@@ -142,18 +145,12 @@ class VAE(BaseEstimator, TransformerMixin):
         outputs = pipe(inputs, self.encoder, get(2), self.decoder)
         vae = Model(inputs, outputs, name="vae_mlp")
 
-        #         if args.mse:
-        reconstruction_loss = mse(inputs, outputs)
-        #         else:
-        #             reconstruction_loss = binary_crossentropy(inputs,
-        #                                                       outputs)
-
-        reconstruction_loss *= layers[0]
+        self.reconstruction_loss *= layers[0]
         kl_loss = 1 + z_log_var - tf.square(z_mean) - tf.math.exp(z_log_var)
         kl_loss = tf.reduce_sum(kl_loss, axis=-1)
         kl_loss *= -0.5
         vae_loss = tf.reduce_mean(
-            reconstruction_loss + self.divergence_weight * kl_loss
+            self.reconstruction_loss + self.divergence_weight * kl_loss
         )
 
         vae.add_loss(vae_loss)
@@ -228,6 +225,7 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         divergence_weight: float = 1,
         alpha: float = 0.0001,
         batch_size: str = "auto",
+        reconstruction_distribution: str = 'IndependentNormal',
         learning_rate: str = "constant",
         learning_rate_init: float = 0.001,
         power_t: float = 0.5,
@@ -250,6 +248,7 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
         """
         self.alpha = alpha
         self.regularizer = l2(alpha)
+        self.reconstruction_distribution = reconstruction_distribution
         self.batch_size = batch_size
         self.hidden_layer_sizes = hidden_layer_sizes
         self.activation = activation
@@ -335,8 +334,8 @@ class LikelihoodVAE(BaseEstimator, TransformerMixin):
             activation=linear,
             name="original_dim"
         )
-        probability_layer = tfp.layers.IndependentNormal(original_dim)
-
+        probability_layer = getattr(tfp.layers, self.reconstruction_distribution)(original_dim)
+        
         outputs = pipe(latent_inputs, transformations, final_layer, probability_layer)
 
         # instantiate decoder model
