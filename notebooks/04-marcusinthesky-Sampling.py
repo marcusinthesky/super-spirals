@@ -46,10 +46,10 @@ data = pd.DataFrame(X @ beta).where(lambda d: d > 0).dropna(how="any").to_numpy(
 # %% {"slideshow": {"slide_type": "skip"}}
 vae = VAE(
     hidden_layer_sizes=(6, 3, 1),
-    max_iter=500,
+    n_iter=500,
     activation="relu",
     alpha=0.0005,
-    divergence_weight=0,
+    elbo_weight=0,
     batch_size=100000 / 10,
 )
 

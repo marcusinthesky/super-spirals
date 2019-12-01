@@ -45,7 +45,7 @@ sys.path.append("../")
 hv.extension("bokeh")
 
 # %% {"slideshow": {"slide_type": "skip"}}
-from super_spirals.neural_network import LikelihoodVAE, VAE
+from super_spirals.neural_network import VAE
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # # Preliminary Analysis
@@ -57,7 +57,7 @@ X = load_iris()
 pipeline = make_pipeline(
     StandardScaler(),
     VAE(
-        hidden_layer_sizes=(5, 2), activation="tanh", divergence_weight=5, max_iter=100
+        hidden_layer_sizes=(5, 2), activation="tanh", elbo_weight=5, n_iter=100
     ),
 )
 
@@ -68,16 +68,10 @@ pipeline.fit(X=X.data)
 # __Inpect model__
 
 # %% [markdown] {"slideshow": {"slide_type": "-"}}
-# Encoder
+# Model
 
 # %% {"slideshow": {"slide_type": "-"}}
-pipeline.named_steps["vae"].encoder.summary()
-
-# %% [markdown] {"slideshow": {"slide_type": "slide"}}
-# __Decoder__
-
-# %% {"slideshow": {"slide_type": "-"}}
-pipeline.named_steps["vae"].decoder.summary()
+pipeline.named_steps["vae"].summary()
 
 # %% [markdown] {"slideshow": {"slide_type": "slide"}}
 # __Denoising__

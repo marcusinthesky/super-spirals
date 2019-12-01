@@ -118,7 +118,7 @@ audio_frequencies = pd.Series(audio_files).apply(get_waveform)
 pipeline = make_pipeline(
     StandardScaler(),
     PCA(whiten=True),
-    VAE(hidden_layer_sizes=(10, 7, 5, 2), max_iter=500, activation="tanh"),
+    VAE(hidden_layer_sizes=(10, 7, 5, 2), n_iter=500, activation="tanh"),
 )
 
 # %%

@@ -79,11 +79,11 @@ def get_models():
     return {
         "VAE (relu)": make_pipeline(
             StandardScaler(),
-            VAE(activation="relu", max_iter=300, hidden_layer_sizes=(4, 2)),
+            VAE(activation="relu", n_iter=300, hidden_layer_sizes=(4, 2)),
         ),
         "VAE (tanh)": make_pipeline(
             StandardScaler(),
-            VAE(activation="tanh", max_iter=300, hidden_layer_sizes=(4, 2)),
+            VAE(activation="tanh", n_iter=300, hidden_layer_sizes=(4, 2)),
         ),
         "PCA": make_pipeline(StandardScaler(), PCA(n_components=2)),
         "ICA": make_pipeline(StandardScaler(), FastICA(n_components=2)),

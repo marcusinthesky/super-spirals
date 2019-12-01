@@ -77,11 +77,11 @@ def get_models():
     return {
         "VAE (relu)": make_pipeline(
             StandardScaler(),
-            LikelihoodVAE(activation="relu", max_iter=300, hidden_layer_sizes=(4, 5, 2)),
+            LikelihoodVAE(activation="relu", n_iter=300, hidden_layer_sizes=(4, 5, 2)),
         ),
         "VAE (tanh)": make_pipeline(
             StandardScaler(),
-            LikelihoodVAE(activation="tanh", max_iter=300, hidden_layer_sizes=(4, 5, 2)),
+            LikelihoodVAE(activation="tanh", n_iter=300, hidden_layer_sizes=(4, 5, 2)),
         ),
         "PCA": make_pipeline(StandardScaler(), PCA(n_components=2)),
         "LLE": make_pipeline(

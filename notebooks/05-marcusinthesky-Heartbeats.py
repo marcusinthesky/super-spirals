@@ -210,8 +210,8 @@ pipeline = make_pipeline(
     PCA(whiten=True),
     VAE(
         hidden_layer_sizes=(15, 10, 2),
-        max_iter=1000,
-        divergence_weight=10,
+        n_iter=1000,
+        elbo_weight=10,
         activation="tanh",
     ),
 )
