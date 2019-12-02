@@ -162,7 +162,6 @@ class ParametricTSNE(_ParametricManifold):
 
 class ParametricMDS(_ParametricManifold):
     def __init__(self,
-                 perplexity: float = 30.,
                  norm_order_input: float = 1.,
                  norm_order_latent: float = 2.,
                  hidden_layer_sizes: Tuple[int] = (4, 2),
@@ -211,7 +210,6 @@ class ParametricMDS(_ParametricManifold):
 
 class ParametricSammonMapping(_ParametricManifold):
     def __init__(self,
-                 perplexity: float = 30.,
                  norm_order_input: float = 1.,
                  norm_order_latent: float = 2.,
                  hidden_layer_sizes: Tuple[int] = (4, 2),
@@ -262,8 +260,8 @@ class ParametricSammonMapping(_ParametricManifold):
 class ParametricLLE(_ParametricManifold):
     def __init__(self,
                  perplexity: float = 30.,
-                 norm_order_input: float = 1.,
-                 norm_order_latent: float = 2.,
+                 norm_order: float = 1.,
+                 neighours: int = 10,
                  hidden_layer_sizes: Tuple[int] = (4, 2),
                  alpha: float = 0.01,
                  l1_ratio: float = 0.,
@@ -285,8 +283,8 @@ class ParametricLLE(_ParametricManifold):
                  verbose: int = 1,
                  callbacks: List = [],):
         super(ParametricLLE, self).__init__(manifold_loss = lambda y_true, y_pred: lle_loss(y_true, y_pred, 
-                                                                          p_true=norm_order_input, 
-                                                                          p_pred=norm_order_latent),
+                                                                          minkowski=norm_order, 
+                                                                          neighours=neighours),
                                             hidden_layer_sizes = hidden_layer_sizes,
                                             alpha = alpha,
                                             l1_ratio = l1_ratio,

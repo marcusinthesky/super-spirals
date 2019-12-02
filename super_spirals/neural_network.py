@@ -56,7 +56,7 @@ class VAE(tf.keras.Model, BaseEstimator, TransformerMixin):
             reinterpreted_batch_ndims=1,
         )
 
-        
+        # setup divergence loss regularizer
         if divergence_loss is 'kl':
             divergence_regularizer = tfp.layers.KLDivergenceRegularizer
         elif divergence_loss is 'mmd':
