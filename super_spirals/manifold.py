@@ -91,7 +91,7 @@ class _ParametricManifold(tf.keras.Model, BaseEstimator, TransformerMixin):
     def call(self, inputs: Union[np.ndarray, tf.Tensor]):
         return pipe(inputs, *self.hidden_tranformations, self.final_transformation)
     
-    def fit(self, X: Union[np.ndarray, tf.Tensor]):
+    def fit(self, X: Union[np.ndarray, tf.Tensor], y = None):
         self.compile(optimizer=self.solver,
                      loss=self.manifold_loss)
         
