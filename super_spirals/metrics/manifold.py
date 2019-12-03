@@ -39,13 +39,13 @@ def strain_loss(y_true, y_pred, p_true=2, p_pred=2):
     return tf.sqrt(numerator / denominator)
 
 @tf.function
-def lle_loss(y_true, y_pred=None, neighours=10, minkowski = 2, l2 = 0.0):
-    
+def lle_loss(y_true, y_pred=None, neighours=10, minkowski = 2, l2 = 0.1):
+    dtype = y_true.dtype
     d_true = minkowski_distance(y_true, p=minkowski)
     d_true_diag_na = tf.negative(d_true)
     neighbour_distance, neighbour_index = tf.nn.top_k(d_true_diag_na, k=neighours+1)
 
-    loss = tf.dtypes.cast(0., tf.float32)
+    loss = tf.dtypes.cast(0., dtype)
     length = tf.shape(y_true)[0]
     features = tf.shape(y_true)[1]
     W = tf.zeros((neighours, 1))
@@ -57,7 +57,8 @@ def lle_loss(y_true, y_pred=None, neighours=10, minkowski = 2, l2 = 0.0):
         
         # this is not true constrained least-squares, 
         #  but is rather based of the scikit implementation
-        W_n = W / tf.reduce_sum(W)
+        # TODO get rid of softmax
+        W_n = (W) / tf.reduce_sum(W)
         
         
         y = tf.reshape(tf.transpose(tf.gather(y_pred, index)), (-1,1))
@@ -66,7 +67,7 @@ def lle_loss(y_true, y_pred=None, neighours=10, minkowski = 2, l2 = 0.0):
         loss += tf.reduce_sum(tf.square(y - X @ W_n))
     
     
-    return loss / ( tf.dtypes.cast(length, tf.float32) * tf.dtypes.cast(features, tf.float32) )
+    return loss / ( tf.dtypes.cast(length, dtype) * tf.dtypes.cast(features, dtype) )
 
 
 @tf.function(experimental_relax_shapes=True)
