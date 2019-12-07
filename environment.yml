@@ -17,10 +17,11 @@ dependencies:
   - bokeh=1.4.0=py37_0
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.15.0=h7b6447c_1001
-  - ca-certificates=2019.9.11=hecc5488_0
-  - certifi=2019.9.11=py37_0
+  - ca-certificates=2019.11.27=0
+  - certifi=2019.11.28=py37_0
   - cffi=1.13.2=py37h2e261b9_0
   - chardet=3.0.4=py37_1003
+  - cloudpickle=1.1.1=py_0
   - colorcet=2.0.1=py_0
   - cryptography=2.8=py37h1ba5d50_0
   - cycler=0.10.0=py_2
@@ -100,7 +101,7 @@ dependencies:
   - numpy=1.17.4=py37hc1035e2_0
   - numpy-base=1.17.4=py37hde5b4d6_0
   - olefile=0.46=py_0
-  - openssl=1.1.1d=h516909a_0
+  - openssl=1.1.1d=h7b6447c_3
   - opt_einsum=3.1.0=py_0
   - packaging=19.2=py_0
   - pandas=0.25.3=py37he6710b0_0
@@ -151,6 +152,7 @@ dependencies:
   - tensorflow=2.0.0=mkl_py37h66b46cc_0
   - tensorflow-base=2.0.0=mkl_py37h9204916_0
   - tensorflow-estimator=2.0.0=pyh2649769_0
+  - tensorflow-probability=0.8.0=py_0
   - termcolor=1.1.0=py37_1
   - terminado=0.8.3=py37_0
   - testpath=0.4.4=py_0
