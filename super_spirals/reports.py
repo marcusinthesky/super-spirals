@@ -3,7 +3,7 @@ import numpy as np
 import holoviews as hv
 import hvplot.pandas
 from typing import Dict
-from toolz.curried import *
+from toolz.curried import pipe, map, compose_left, partial
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import silhouette_score
 from sklearn.base import TransformerMixin

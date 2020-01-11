@@ -60,7 +60,7 @@ import numpy as np
 import holoviews as hv
 import hvplot.pandas
 from typing import Dict
-from toolz.curried import *
+from toolz.curried import pipe, map, compose_left, partial
 from sklearn.decomposition import PCA, FastICA, KernelPCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline

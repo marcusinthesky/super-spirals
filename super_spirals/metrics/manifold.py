@@ -1,10 +1,10 @@
 import tensorflow as tf
-from .pairwise import minkowski_distance
+from .pairwise import minkowski_distances
 from ..optimize import binary_search
 
 @tf.function
-def double_standardized_squared_minkowski_distance(X, Y=None, p=2):
-    D_squared = tf.square(minkowski_distance(X, Y, p=p))
+def double_standardized_squared_minkowski_distances(X, Y=None, p=2):
+    D_squared = tf.square(minkowski_distances(X, Y, p=p))
     
     shape = tf.shape(D_squared)
     
@@ -17,9 +17,9 @@ def double_standardized_squared_minkowski_distance(X, Y=None, p=2):
 @tf.function
 def stress_loss(y_true, y_pred, p_true=2, p_pred=2):
     
-    d_true = minkowski_distance(y_true, p=p_true)
+    d_true = minkowski_distances(y_true, p=p_true)
     
-    d_pred = minkowski_distance(y_pred, p=p_pred)
+    d_pred = minkowski_distances(y_pred, p=p_pred)
     
     numerator = tf.reduce_sum(tf.square(d_true - d_pred))
     denominator = tf.reduce_sum(tf.square(d_true))
@@ -29,9 +29,9 @@ def stress_loss(y_true, y_pred, p_true=2, p_pred=2):
 @tf.function
 def strain_loss(y_true, y_pred, p_true=2, p_pred=2):
     
-    b_true = double_standardized_squared_minkowski_distance(y_true, p=p_true)
+    b_true = double_standardized_squared_minkowski_distances(y_true, p=p_true)
     
-    b_pred = double_standardized_squared_minkowski_distance(y_pred, p=p_pred)
+    b_pred = double_standardized_squared_minkowski_distances(y_pred, p=p_pred)
     
     numerator = tf.reduce_sum(tf.square(b_true - b_pred))
     denominator = tf.reduce_sum(tf.square(b_true))
@@ -41,7 +41,7 @@ def strain_loss(y_true, y_pred, p_true=2, p_pred=2):
 @tf.function
 def lle_loss(y_true, y_pred=None, neighours=10, minkowski = 2, l2 = 0.1):
     dtype = y_true.dtype
-    d_true = minkowski_distance(y_true, p=minkowski)
+    d_true = minkowski_distances(y_true, p=minkowski)
     d_true_diag_na = tf.negative(d_true)
     neighbour_distance, neighbour_index = tf.nn.top_k(d_true_diag_na, k=neighours+1)
 
@@ -111,7 +111,7 @@ def tsne_loss(y_true, y_pred, p_true=2, p_pred=2, perpexity = 1.):
                                y_true.dtype)
     
     # High dimensional space
-    d_true = minkowski_distance(y_true, p=p_true)
+    d_true = minkowski_distances(y_true, p=p_true)
     
     all_perplexities = tf.ones((length))*perpexity
     
@@ -122,7 +122,7 @@ def tsne_loss(y_true, y_pred, p_true=2, p_pred=2, perpexity = 1.):
     p_true = (p_true_conditional + tf.transpose(p_true_conditional))/(2* tf.reduce_sum(null_diag, axis=0))
     
     # Low dimensional space
-    d_pred = minkowski_distance(y_pred, p=p_pred)
+    d_pred = minkowski_distances(y_pred, p=p_pred)
     q_pred_numerator = (1 + d_pred**2)**-1
     q_pred_denominator = tf.reduce_sum(q_pred_numerator * null_diag, axis=0)
     q_pred = q_pred_numerator/q_pred_denominator

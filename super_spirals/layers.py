@@ -1,5 +1,5 @@
 import tensorflow as tf
-from super_spirals.metrics.pairwise import minkowski_distance
+from super_spirals.metrics.pairwise import minkowski_distances
 from super_spirals.metrics.manifold import p_conditional as negative_exponentiated_quadratic
 
 
@@ -14,9 +14,9 @@ def _make_mmd_divergence_fn(distribution_b,
         a_samples = test_points_fn(distribution_a)
         b_samples = distribution_b.sample(1)
 
-        x_kernel = negative_exponentiated_quadratic(minkowski_distance(a_samples, a_samples), 1)
-        y_kernel = negative_exponentiated_quadratic(minkowski_distance(b_samples, b_samples), 1)
-        xy_kernel = negative_exponentiated_quadratic(minkowski_distance(a_samples, b_samples), 1)
+        x_kernel = negative_exponentiated_quadratic(minkowski_distances(a_samples, a_samples), 1)
+        y_kernel = negative_exponentiated_quadratic(minkowski_distances(b_samples, b_samples), 1)
+        xy_kernel = negative_exponentiated_quadratic(minkowski_distances(a_samples, b_samples), 1)
         
         return (tf.reduce_mean(x_kernel) + 
                 tf.reduce_mean(y_kernel) - 

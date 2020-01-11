@@ -1,9 +1,10 @@
 import tensorflow as tf
 from sklearn.base import BaseEstimator, TransformerMixin
-from toolz.curried import *
+from toolz.curried import pipe, map, compose_left, partial
 from super_spirals.metrics.manifold import tsne_loss, stress_loss, strain_loss, lle_loss
 import numpy as np
 from typing import Tuple, Union, List
+from pathlib import Path
 from abc import ABCMeta
 import warnings
 
@@ -17,7 +18,7 @@ class _ParametricManifold(tf.keras.Model, BaseEstimator, TransformerMixin):
                  activation: str = 'selu',
                  n_iter:int = 20,
                  solver: Union[str, ABCMeta] = 'adam',
-                 batch_size: float = 100,
+                 batch_size: int = 100,
                  shuffle: bool = True,
                  learning_rate_init: float = 0.001,
                  validation_fraction: float = 0.1,
@@ -31,10 +32,15 @@ class _ParametricManifold(tf.keras.Model, BaseEstimator, TransformerMixin):
                  tol:float = 0.0001,
                  verbose: int = 1,
                  callbacks: List = [],
+                 weights_path: Union[str, Path, None] = None
                 ):
         super(_ParametricManifold, self).__init__()
         
         # define model
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
+        self.activation = self.activation
         *hidden_units, final_unit = hidden_layer_sizes
         self.hidden_tranformations = pipe(hidden_units,
                                           map(lambda d: tf.keras.layers.Dense(units=d,
@@ -44,69 +50,100 @@ class _ParametricManifold(tf.keras.Model, BaseEstimator, TransformerMixin):
         self.final_transformation = tf.keras.layers.Dense(final_unit, activation='linear')
         
         # get optmizer
+        self.solver = solver
+        self.learning_rate_init = learning_rate_init
+        self.beta_1 = beta_1
+        self.beta_2 = beta_2
+        self.epsilon = epsilon
+        self.momentum = momentum
+        self.nesterovs_momentum = nesterovs_momentum
         if solver == "auto" or solver.title() == 'Adam':
-            self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
+            self.solver_ = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
                                                     beta_1 = beta_1,
                                                     beta_2 = beta_2,
                                                     epsilon = epsilon)
         elif solver.title() == 'SGD':
-            self.solver = tf.keras.optimizers.SGD(learning_rate=learning_rate_init,
+            self.solver_ = tf.keras.optimizers.SGD(learning_rate=learning_rate_init,
                                                   momentum=momentum,
                                                   nesterov=nesterovs_momentum)
         elif type(solver) is str:
-            self.solver = getattr(tf.keras.optimizers, solver)(learning_rate=learning_rate_init)
+            self.solver_ = getattr(tf.keras.optimizers, solver)(learning_rate=learning_rate_init)
         elif type(solver) is ABCMeta:
-            self.solver = solver
+            self.solver_ = solver
         else:
             warnings.warn('Not a valid optimizer, reverting to Adam')
-            self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
+            self.solver_ = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
                                                     beta_1 = beta_1,
                                                     beta_2 = beta_2,
                                                     epsilon = epsilon)
         
         # get batch size
+        self.batch_size = batch_size
         if batch_size == None or batch_size == 'auto':
-            self.batch_size = 32
+            self.batch_size_ = 32
         else:
-            self.batch_size = batch_size
+            self.batch_size_ = batch_size
             
         self.validation_fraction = validation_fraction
         self.n_iter = n_iter
         self.shuffle = shuffle
         
         # Options
+        self.early_stopping = early_stopping
+        self.n_iter_no_change = n_iter_no_change
+        self.tol = tol
+        self.callbacks = callbacks
         if early_stopping:
-            self.callbacks = [tf.keras.callbacks.EarlyStopping(monitor = 'val_loss',
+            self.callbacks_ = [tf.keras.callbacks.EarlyStopping(monitor = 'val_loss',
                                                                min_delta = tol,
                                                                patience = n_iter_no_change), *callbacks]
         else:
-            self.callbacks = [*callbacks]
+            self.callbacks_ = [*callbacks]
             
         self.verbose = verbose
 
         # get loss
         self.manifold_loss = manifold_loss
+
+        self.weights_path = weights_path
         
         
     def call(self, inputs: Union[np.ndarray, tf.Tensor]):
         return pipe(inputs, *self.hidden_tranformations, self.final_transformation)
     
     def fit(self, X: Union[np.ndarray, tf.Tensor], y = None):
-        self.compile(optimizer=self.solver,
+        self.compile(optimizer=self.solver_,
                      loss=self.manifold_loss)
+
+        if self.weights_path != None:
+            self.train_on_batch(X[:1], X[:1])
+
+            # Load the state of the old model
+            self.load_weights(self.weights_path)
+            self.weights_path = None
+
         
         super().fit(x = X, y = X,
                     shuffle = self.shuffle,
                     epochs = self.n_iter,
-                    batch_size = self.batch_size,
+                    batch_size = self.batch_size_,
                     validation_split = self.validation_fraction,
-                    callbacks = self.callbacks,
+                    callbacks = self.callbacks_,
                     verbose=self.verbose)
         
         return self
     
     def transform(self, X: Union[np.ndarray, tf.Tensor]):
-    
+        self.compile(optimizer=self.solver_,
+                     loss=self.manifold_loss)
+
+        if self.weights_path != None:
+            self.train_on_batch(X[:1], X[:1])
+
+            # Load the state of the old model
+            self.load_weights(self.weights_path)
+            self.weights_path = None
+            
         return self.call(X)
 
 class ParametricTSNE(_ParametricManifold):

@@ -54,7 +54,7 @@ import pandas as pd
 import numpy as np
 import holoviews as hv
 import hvplot.pandas
-from toolz.curried import *
+from toolz.curried import pipe, map, compose_left, partial
 from sklearn import manifold
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler

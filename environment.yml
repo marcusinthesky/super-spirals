@@ -6,21 +6,24 @@ dependencies:
   - _libgcc_mutex=0.1=main
   - _tflow_select=2.3.0=mkl
   - absl-py=0.8.1=py37_0
+  - appdirs=1.4.3=py_1
   - arrow-cpp=0.11.1=py37h5c3f529_1
   - asn1crypto=1.2.0=py37_0
   - astor=0.8.0=py37_0
   - astroid=2.3.3=py37_0
   - attrs=19.3.0=py_0
   - backcall=0.1.0=py37_0
+  - black=19.10b0=py37_0
   - blas=1.0=mkl
   - bleach=3.1.0=py37_0
   - bokeh=1.4.0=py37_0
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.15.0=h7b6447c_1001
-  - ca-certificates=2019.11.27=0
+  - ca-certificates=2019.11.28=hecc5488_0
   - certifi=2019.11.28=py37_0
   - cffi=1.13.2=py37h2e261b9_0
   - chardet=3.0.4=py37_1003
+  - click=7.0=py_0
   - cloudpickle=1.1.1=py_0
   - colorcet=2.0.1=py_0
   - cryptography=2.8=py37h1ba5d50_0
@@ -50,6 +53,7 @@ dependencies:
   - idna=2.8=py37_0
   - importlib_metadata=0.23=py37_0
   - intel-openmp=2019.4=243
+  - ipdb=0.12.3=py_0
   - ipykernel=5.1.3=py37h39e3cac_0
   - ipython=7.9.0=py37h39e3cac_0
   - ipython_genutils=0.2.0=py37_0
@@ -94,6 +98,7 @@ dependencies:
   - mkl_fft=1.0.15=py37ha843d7b_0
   - mkl_random=1.1.0=py37hd6b4f25_0
   - more-itertools=7.2.0=py37_0
+  - mypy_extensions=0.4.3=py37_0
   - nbconvert=5.6.1=py37_0
   - nbformat=4.4.0=py37_0
   - ncurses=6.1=he6710b0_1
@@ -101,7 +106,7 @@ dependencies:
   - numpy=1.17.4=py37hc1035e2_0
   - numpy-base=1.17.4=py37hde5b4d6_0
   - olefile=0.46=py_0
-  - openssl=1.1.1d=h7b6447c_3
+  - openssl=1.1.1d=h516909a_0
   - opt_einsum=3.1.0=py_0
   - packaging=19.2=py_0
   - pandas=0.25.3=py37he6710b0_0
@@ -109,6 +114,7 @@ dependencies:
   - pandocfilters=1.4.2=py37_1
   - param=1.9.2=py_0
   - parso=0.5.1=py_0
+  - pathspec=0.7.0=py_0
   - pcre=8.43=he1b5a44_0
   - pexpect=4.7.0=py37_0
   - pickleshare=0.7.5=py37_0
@@ -138,6 +144,7 @@ dependencies:
   - pyzmq=18.1.0=py37he6710b0_0
   - qt=5.9.7=h52cfd70_2
   - readline=7.0=h7b6447c_5
+  - regex=2020.1.8=py37h516909a_0
   - requests=2.22.0=py37_1
   - scikit-learn=0.21.3=py37hd81dba3_0
   - scipy=1.3.1=py37h7c811a0_0
@@ -158,9 +165,12 @@ dependencies:
   - testpath=0.4.4=py_0
   - thrift-cpp=0.11.0=h02b749d_3
   - tk=8.6.8=hbc83047_0
+  - toml=0.10.0=py_0
   - toolz=0.10.0=py_0
   - tornado=6.0.3=py37h7b6447c_0
   - traitlets=4.3.3=py37_0
+  - typed-ast=1.4.0=py37h516909a_0
+  - typing_extensions=3.7.4.1=py37_0
   - urllib3=1.25.7=py37_0
   - wcwidth=0.1.7=py37_0
   - webencodings=0.5.1=py37_1
@@ -175,5 +185,3 @@ dependencies:
   - zipp=0.6.0=py_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
-prefix: /home/marcussky/anaconda3/envs/super_spirals
-

@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
 from sklearn.base import BaseEstimator, RegressorMixin
-from toolz.curried import *
+from toolz.curried import pipe, map, compose_left, partial
 import numpy as np
 from typing import Tuple, Union, List
 from abc import ABCMeta
@@ -64,6 +64,14 @@ class DeepVariationalGaussianProcess(tf.keras.Model, BaseEstimator, RegressorMix
         super(DeepVariationalGaussianProcess, self).__init__()
         
         # define model
+        self.kernel = kernel
+        self.num_inducing_points = num_inducing_points
+        self.alpha = alpha
+        self.elbo_weight = elbo_weight
+        self.hidden_layer_sizes = hidden_layer_sizes
+        self.l1_ratio = l1_ratio
+        self.activation = activation
+
         hidden_units = (*hidden_layer_sizes, 1,)
         self.hidden_units = hidden_units
         self.hidden_tranformations = pipe(hidden_units,
@@ -80,22 +88,29 @@ class DeepVariationalGaussianProcess(tf.keras.Model, BaseEstimator, RegressorMix
                                                                           jitter = alpha)
         
         # get optmizer
+        self.solver = solver
+        self.learning_rate_init = learning_rate_init
+        self.beta_1 = beta_1
+        self.beta_2 = beta_2
+        self.epsilon = epsilon
+        self.momentum = momentum
+        self.nesterovs_momentum = nesterovs_momentum
         if solver == "auto" or solver.title() == 'Adam':
-            self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
+            self.solver_ = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
                                                     beta_1 = beta_1,
                                                     beta_2 = beta_2,
                                                     epsilon = epsilon)
         elif solver.title() == 'SGD':
-            self.solver = tf.keras.optimizers.SGD(learning_rate=learning_rate_init,
+            self.solver_ = tf.keras.optimizers.SGD(learning_rate=learning_rate_init,
                                                   momentum=momentum,
                                                   nesterov=nesterovs_momentum)
         elif type(solver) is str:
-            self.solver = getattr(tf.keras.optimizers, solver)(learning_rate=learning_rate_init)
+            self.solver_ = getattr(tf.keras.optimizers, solver)(learning_rate=learning_rate_init)
         elif type(solver) is ABCMeta:
-            self.solver = solver
+            self.solver_ = solver
         else:
             warnings.warn('Not a valid optimizer, reverting to Adam')
-            self.solver = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
+            self.solver_ = tf.keras.optimizers.Adam(learning_rate=learning_rate_init, 
                                                     beta_1 = beta_1,
                                                     beta_2 = beta_2,
                                                     epsilon = epsilon)
@@ -109,14 +124,17 @@ class DeepVariationalGaussianProcess(tf.keras.Model, BaseEstimator, RegressorMix
         self.validation_fraction = validation_fraction
         self.n_iter = n_iter
         self.shuffle = shuffle
-        
+        self.n_iter_no_change = n_iter_no_change
+        self.early_stopping = early_stopping
+        self.tol =tol
+        self.callbacks = callbacks
         # Options
         if early_stopping:
-            self.callbacks = [tf.keras.callbacks.EarlyStopping(monitor = 'val_loss',
+            self.callbacks_ = [tf.keras.callbacks.EarlyStopping(monitor = 'val_loss',
                                                                min_delta = tol,
                                                                patience = n_iter_no_change), *callbacks]
         else:
-            self.callbacks = [*callbacks]
+            self.callbacks_ = [*callbacks]
             
         self.verbose = verbose
         
@@ -128,7 +146,7 @@ class DeepVariationalGaussianProcess(tf.keras.Model, BaseEstimator, RegressorMix
         loss = lambda y, rv_y: rv_y.variational_loss(
             y, kl_weight=np.array(self.batch_size, X.dtype) / X.shape[0])
         
-        self.compile(optimizer=self.solver,
+        self.compile(optimizer=self.solver_,
                      loss=loss)
         
         # TODO: Figure out why it fails when not called before fitting
@@ -139,7 +157,7 @@ class DeepVariationalGaussianProcess(tf.keras.Model, BaseEstimator, RegressorMix
                     epochs = self.n_iter,
                     batch_size = self.batch_size,
                     validation_split = self.validation_fraction,
-                    callbacks = self.callbacks,
+                    callbacks = self.callbacks_,
                     verbose=self.verbose)
         
         return self

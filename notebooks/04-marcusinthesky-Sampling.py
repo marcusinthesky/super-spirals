@@ -26,7 +26,7 @@ import numpy as np
 from sklearn.decomposition import PCA, KernelPCA
 import holoviews as hv
 import hvplot.pandas
-from toolz.curried import *
+from toolz.curried import pipe, map, compose_left, partial
 
 
 sys.path.append("../")
