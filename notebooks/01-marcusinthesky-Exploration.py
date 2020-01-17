@@ -56,9 +56,7 @@ X = load_iris()
 # %% {"slideshow": {"slide_type": "skip"}}
 pipeline = make_pipeline(
     StandardScaler(),
-    VAE(
-        hidden_layer_sizes=(5, 2), activation="tanh", elbo_weight=5, n_iter=100
-    ),
+    VAE(hidden_layer_sizes=(5, 2), activation="tanh", elbo_weight=5, n_iter=100),
 )
 
 # %% {"slideshow": {"slide_type": "skip"}}

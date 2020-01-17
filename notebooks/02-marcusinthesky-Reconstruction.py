@@ -145,9 +145,12 @@ wine_plot
 
 # %% {"slideshow": {"slide_type": "skip"}}
 cancer_models = get_models()
-cancer_df, cancer_reconstruction, cancer_silhouette, cancer_plot = reconstruction_benchmark(
-    load_breast_cancer(), cancer_models, "Cancer Dataset"
-)
+(
+    cancer_df,
+    cancer_reconstruction,
+    cancer_silhouette,
+    cancer_plot,
+) = reconstruction_benchmark(load_breast_cancer(), cancer_models, "Cancer Dataset")
 
 # %% {"slideshow": {"slide_type": "slide"}}
 # %%output filename='../media/02-cancer-loss' fig='png'
@@ -171,9 +174,12 @@ class get_random:
 
 # %% {"slideshow": {"slide_type": "skip"}}
 random_models = get_models()
-random_df, random_reconstruction, random_silhouette, random_plot = reconstruction_benchmark(
-    get_random(), random_models, "Random Dataset"
-)
+(
+    random_df,
+    random_reconstruction,
+    random_silhouette,
+    random_plot,
+) = reconstruction_benchmark(get_random(), random_models, "Random Dataset")
 
 # %% {"slideshow": {"slide_type": "skip"}}
 # %%output filename='../media/02-random-loss' fig='png'

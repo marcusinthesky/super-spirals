@@ -234,9 +234,14 @@ def read_wav(
             size, numcue = struct.unpack("<ii", str1)
             for c in range(numcue):
                 str1 = fid.read(24)
-                idx, position, datachunkid, chunkstart, blockstart, sampleoffset = struct.unpack(
-                    "<iiiiii", str1
-                )
+                (
+                    idx,
+                    position,
+                    datachunkid,
+                    chunkstart,
+                    blockstart,
+                    sampleoffset,
+                ) = struct.unpack("<iiiiii", str1)
                 # _cue.append(position)
                 _markersdict[idx][
                     "position"
@@ -264,9 +269,18 @@ def read_wav(
 
         elif chunk_id == b"smpl":
             str1 = fid.read(40)
-            size, manuf, prod, sampleperiod, midiunitynote, midipitchfraction, smptefmt, smpteoffs, numsampleloops, samplerdata = struct.unpack(
-                "<iiiiiIiiii", str1
-            )
+            (
+                size,
+                manuf,
+                prod,
+                sampleperiod,
+                midiunitynote,
+                midipitchfraction,
+                smptefmt,
+                smpteoffs,
+                numsampleloops,
+                samplerdata,
+            ) = struct.unpack("<iiiiiIiiii", str1)
             cents = midipitchfraction * 1.0 / (2 ** 32 - 1)
             pitch = 440.0 * 2 ** ((midiunitynote + cents - 69.0) / 12)
             for i in range(numsampleloops):
